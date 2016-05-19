@@ -2,7 +2,7 @@
 
 var FACEBOOK_PAGE_ID = "1120404654676522";
 var FACEBOOK_PAGE_ACCESS_TOKEN = ""; // This is just for local debugging.
-var MONGODB_NAME = "balckjackchat";
+var MONGODB_NAME = "blackjackchat";
 var consts = {
 	FACEBOOK_WELCOME_MSG_URL: "https://graph.facebook.com/v2.6/" + FACEBOOK_PAGE_ID + "/thread_settings?access_token=" + (process.env.FACEBOOK_PAGE_ACCESS_TOKEN || FACEBOOK_PAGE_ACCESS_TOKEN),
 	FACEBOOK_USER_PROFILE_API: "https://graph.facebook.com/v2.6/<USER_ID>?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=" + (process.env.FACEBOOK_PAGE_ACCESS_TOKEN || FACEBOOK_PAGE_ACCESS_TOKEN),

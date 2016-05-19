@@ -84,6 +84,11 @@ controller.on('facebook_optin', function(bot, message) {
   bot.reply(message, 'Hey, welcome !');
 });
 
+// User wants help.
+controller.hears(["^http(.*)(.png|.jpg)"] , 'message_received', function(bot, message) {
+  bot.reply(message, "This is a picture");
+});
+
 // User said hello.
 controller.hears(Sentences.user_welcoming_messages, 'message_received', function(bot, message) {
   bot.reply(message, Utils.randomFromArray(Sentences.bot_welcoming_messages));

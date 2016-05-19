@@ -87,6 +87,7 @@ controller.on('facebook_optin', function(bot, message) {
 // User wants help.
 controller.hears(["^http(.*)(.png|.jpg)"] , 'message_received', function(bot, message) {
   bot.reply(message, "This is a picture");
+  Utils.showPicture(bot, message, message.text);
 });
 
 // User said hello.

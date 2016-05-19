@@ -290,6 +290,27 @@ function showGroupsToUserInternal(bot, message, getterParams) {
   }, getterParams);
 }
 
+function showPictureInternal(bot, message, url) {
+  bot.reply(message, {
+    attachment: {
+      type: 'template',
+      payload: {
+        template_type: 'generic',
+        elements: {
+          title: "Picture from user",
+          image_url: url,
+          subtitle: url,
+          buttons: [{
+            type: 'web_url',
+            title: 'Show picture online',
+            url: url
+          }]
+        }
+      }
+    }
+  });
+}
+
 function sendMultipleAttachmentsOneByOne(bot, message, arr, index) {
   if (typeof index !== "number") index = 0;
   if (index >= arr.length) return;
@@ -508,6 +529,9 @@ var utils = {
   },
   translateBotMessage: function (userInfo, text, callback) {
     translateBotMessageInternal(userInfo, text, callback);
+  },
+  showPicture: function(bot, message, url) {
+    showPictureInternal(bot, message, url);
   }
 }
 

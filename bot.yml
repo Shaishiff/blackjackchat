@@ -1,0 +1,26 @@
+name: BlackjackChat
+config:
+  - name: ANALYTICS_TOKEN
+    friendly_name: ANALYTICS_TOKEN
+    type: secret
+    global: true
+  - name: LUIS_NLP_TOKEN
+    friendly_name: LUIS_NLP_TOKEN
+    type: secret
+    global: true
+  - name: MONGO_DB_USER
+    friendly_name: MONGO_DB_USER
+    type: secret
+    global: true
+  - name: MONGO_DB_PASSWORD
+    friendly_name: MONGO_DB_PASSWORD
+    type: secret
+    global: true
+  - name: CYRANOAPI_HOST
+    friendly_name: CYRANOAPI_HOST
+    type: secret
+    global: true
+  - name: CYRANOAPI_TOKEN
+    friendly_name: CYRANOAPI_TOKEN
+    type: secret
+    global: true

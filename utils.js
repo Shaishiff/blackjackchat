@@ -296,7 +296,7 @@ function showPictureInternal(bot, message, url) {
       type: 'template',
       payload: {
         template_type: 'generic',
-        elements: {
+        elements: [{
           title: "Picture from user",
           image_url: url,
           subtitle: url,
@@ -305,7 +305,7 @@ function showPictureInternal(bot, message, url) {
             title: 'Show picture online',
             url: url
           }]
-        }
+        }]
       }
     }
   });

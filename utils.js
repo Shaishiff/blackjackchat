@@ -23,7 +23,7 @@ function insertUserInfoToMongo(userInfo, callback) {
 }
 
 function getUserInfoFromMongo(userId, callback) {
-  console.log("getUserInfoFromMongo");
+  console.log("getUserInfoFromMongo: " + Consts.MONGODB_URL);
   MongoClient.connect(Consts.MONGODB_URL, function(err, db) {
     console.log("Connected correctly to server: " + err);
     var col = db.collection(Consts.MONGODB_USER_INFO_COL);

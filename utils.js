@@ -293,6 +293,17 @@ function showGroupsToUserInternal(bot, message, getterParams) {
 function showPictureInternal(bot, message, url) {
   bot.reply(message, {
     attachment: {
+      type: 'image',
+      payload: {
+        url: url
+      }
+    }
+  });
+}
+
+function showPictureInternal2(bot, message, url) {
+  bot.reply(message, {
+    attachment: {
       type: 'template',
       payload: {
         template_type: 'generic',

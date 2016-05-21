@@ -290,7 +290,7 @@ function showGroupsToUserInternal(bot, message, getterParams) {
   }, getterParams);
 }
 
-function showPictureInternal(bot, message, url) {
+function showPictureInternalImageOnly(bot, message, url) {
   bot.reply(message, {
     attachment: {
       type: 'image',
@@ -298,84 +298,114 @@ function showPictureInternal(bot, message, url) {
         url: url
       }
     }
+  }, function() {
+    showPictureInternalWithButtons(bot, message, url);    
   });
-
-  setTimeout(function() {
-    bot.reply(message, {
-      attachment: {
-        type: 'template',
-        payload: {
-          "template_type":"button",
-          "text":"What do you want to do next?",
-          "buttons":[
-            {
-              "type":"web_url",
-              "url":"https://petersapparel.parseapp.com",
-              "title":"Show Website"
-            },
-            {
-              "type":"postback",
-              "title":"Start Chatting",
-              "payload":"USER_DEFINED_PAYLOAD"
-            }
-          ]
-        }
-      }
-    });
-  }, 2000);
 }
 
-function showPictureInternal2(bot, message, url) {
+function showPictureInternalWithButtons(bot, message, url) {
+  bot.reply(message, {
+    attachment: {
+      type: 'image',
+      payload: {
+        "template_type":"button",
+        "text":"What do you want to do next?",
+        "buttons":[
+          {
+            "type":"web_url",
+            "url":"https://petersapparel.parseapp.com",
+            "title":"CTA 1"
+          },
+          {
+            "type":"postback",
+            "title":"CTA 2",
+            "payload":"USER_DEFINED_PAYLOAD"
+          }
+        ]
+      }
+    }
+  }, function() {
+    showPictureInternalButtonOnly(bot, message, url);    
+  });
+}
+
+function showPictureInternalButtonOnly(bot, message, url) {
+  bot.reply(message, {
+    attachment: {
+      type: 'template',
+      payload: {
+        "template_type":"button",
+        "text":"This is just text with buttons",
+        "buttons":[
+          {
+            "type":"web_url",
+            "url":"https://google.com",
+            "title":"CTA 1"
+          },
+          {
+            "type":"postback",
+            "title":"CTA 2",
+            "payload":"USER_DEFINED_PAYLOAD"
+          }
+        ]
+      }
+    }
+  }, function() {
+    showPictureInternalPictureWithButton(bot, message, url);    
+  });
+}
+
+function showPictureInternalPictureWithButton(bot, message, url) {
   bot.reply(message, {
     attachment: {
       type: 'template',
       payload: {
         template_type: 'generic',
         elements: [{
-          title: "Picture from user",
+          title: "Multiple Pictures",
           image_url: url,
-          //subtitle: url,
-          buttons: [
-          {
+          buttons: [{
             type: 'web_url',
-            title: 'Hit me harder',
+            title: 'CTA 1',
             url: url
           },
           {
             type: 'web_url',
-            title: 'Stay fucker',
+            title: 'CTA 2',
             url: url
-          }
-          
-          ]
+          }]
+        },
+        {
+          title: "Multiple Pictures",
+          image_url: url,
+          buttons: [{
+            type: 'web_url',
+            title: 'CTA 1',
+            url: url
+          },
+          {
+            type: 'web_url',
+            title: 'CTA 2',
+            url: url
+          }]
+        },
+        {
+          title: "Multiple Pictures",
+          image_url: url,
+          buttons: [{
+            type: 'web_url',
+            title: 'CTA 1',
+            url: url
+          },
+          {
+            type: 'web_url',
+            title: 'CTA 2',
+            url: url
+          }]
         }]
       }
     }
   });
-
-  setTimeout(function() {
-    bot.reply(message, {
-      attachment: {
-        type: 'image',
-        payload: {
-          "template_type":"button",
-          "text":"What do you want to do next?",
-          "buttons":[
-            {
-              "type":"web_url",
-              "url":"https://petersapparel.parseapp.com",
-              "title":"Show Website"
-            },
-            {
-              "type":"postback",
-              "title":"Start Chatting",
-              "payload":"USER_DEFINED_PAYLOAD"
-            }
-          ]
-        }
-      }
-    });
-  }, 2000);
 }
 
 function sendMultipleAttachmentsOneByOne(bot, message, arr, index) {
@@ -598,7 +628,7 @@ var utils = {
     translateBotMessageInternal(userInfo, text, callback);
   },
   showPicture: function(bot, message, url) {
-    showPictureInternal(bot, message, url);
+    showPictureInternalImageOnly(bot, message, url);
   }
 }
 

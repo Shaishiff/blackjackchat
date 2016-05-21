@@ -290,7 +290,7 @@ function showGroupsToUserInternal(bot, message, getterParams) {
   }, getterParams);
 }
 
-function showPictureInternal2(bot, message, url) {
+function showPictureInternal(bot, message, url) {
   bot.reply(message, {
     attachment: {
       type: 'image',
@@ -299,9 +299,33 @@ function showPictureInternal2(bot, message, url) {
       }
     }
   });
+
+  setTimeout(function() {
+    bot.reply(message, {
+      attachment: {
+        type: 'image',
+        payload: {
+          "template_type":"button",
+          "text":"What do you want to do next?",
+          "buttons":[
+            {
+              "type":"web_url",
+              "url":"https://petersapparel.parseapp.com",
+              "title":"Show Website"
+            },
+            {
+              "type":"postback",
+              "title":"Start Chatting",
+              "payload":"USER_DEFINED_PAYLOAD"
+            }
+          ]
+        }
+      }
+    });
+  }, 2000);
 }
 
-function showPictureInternal(bot, message, url) {
+function showPictureInternal2(bot, message, url) {
   bot.reply(message, {
     attachment: {
       type: 'template',
@@ -328,6 +352,30 @@ function showPictureInternal(bot, message, url) {
       }
     }
   });
+
+  setTimeout(function() {
+    bot.reply(message, {
+      attachment: {
+        type: 'image',
+        payload: {
+          "template_type":"button",
+          "text":"What do you want to do next?",
+          "buttons":[
+            {
+              "type":"web_url",
+              "url":"https://petersapparel.parseapp.com",
+              "title":"Show Website"
+            },
+            {
+              "type":"postback",
+              "title":"Start Chatting",
+              "payload":"USER_DEFINED_PAYLOAD"
+            }
+          ]
+        }
+      }
+    });
+  }, 2000);
 }
 
 function sendMultipleAttachmentsOneByOne(bot, message, arr, index) {

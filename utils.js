@@ -308,11 +308,10 @@ function showPictureInternal(bot, message, url) {
       payload: {
         template_type: 'generic',
         elements: [{
-          //title: "Picture from user",
+          title: "Picture from user",
           image_url: url,
           //subtitle: url,
           buttons: [
-          
           {
             type: 'web_url',
             title: 'Hit me harder',

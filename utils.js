@@ -290,7 +290,7 @@ function showGroupsToUserInternal(bot, message, getterParams) {
   }, getterParams);
 }
 
-function showPictureInternal(bot, message, url) {
+function showPictureInternal2(bot, message, url) {
   bot.reply(message, {
     attachment: {
       type: 'image',
@@ -301,7 +301,7 @@ function showPictureInternal(bot, message, url) {
   });
 }
 
-function showPictureInternal2(bot, message, url) {
+function showPictureInternal(bot, message, url) {
   bot.reply(message, {
     attachment: {
       type: 'template',
@@ -312,13 +312,18 @@ function showPictureInternal2(bot, message, url) {
           image_url: url,
           //subtitle: url,
           buttons: [
-          /*
+          
           {
             type: 'web_url',
-            title: 'Show picture online',
+            title: 'Hit me harder',
+            url: url
+          },
+          {
+            type: 'web_url',
+            title: 'Stay fucker',
             url: url
           }
-          */
+          
           ]
         }]
       }

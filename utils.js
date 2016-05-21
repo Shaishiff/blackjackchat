@@ -297,14 +297,18 @@ function showPictureInternal(bot, message, url) {
       payload: {
         template_type: 'generic',
         elements: [{
-          title: "Picture from user",
+          //title: "Picture from user",
           image_url: url,
-          subtitle: url,
-          buttons: [{
+          //subtitle: url,
+          buttons: [
+          /*
+          {
             type: 'web_url',
             title: 'Show picture online',
             url: url
-          }]
+          }
+          */
+          ]
         }]
       }
     }

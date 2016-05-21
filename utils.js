@@ -303,7 +303,7 @@ function showPictureInternal(bot, message, url) {
   setTimeout(function() {
     bot.reply(message, {
       attachment: {
-        type: 'image',
+        type: 'template',
         payload: {
           "template_type":"button",
           "text":"What do you want to do next?",

@@ -306,22 +306,23 @@ function showPictureInternalImageOnly(bot, message, url) {
 function showPictureInternalWithButtons(bot, message, url) {
   bot.reply(message, {
     attachment: {
-      type: 'image',
+      type: 'template',
       payload: {
-        "template_type":"button",
-        "text":"What do you want to do next?",
-        "buttons":[
-          {
-            "type":"web_url",
-            "url":"https://petersapparel.parseapp.com",
-            "title":"CTA 1"
+        template_type: 'generic',
+        elements: [{
+          title: "Picture with buttons",
+          image_url: url,
+          buttons: [{
+            type: 'web_url',
+            title: 'CTA 1',
+            url: url
           },
           {
-            "type":"postback",
-            "title":"CTA 2",
-            "payload":"USER_DEFINED_PAYLOAD"
-          }
-        ]
+            type: 'web_url',
+            title: 'CTA 2',
+            url: url
+          }]
+        }]
       }
     }
   }, function() {

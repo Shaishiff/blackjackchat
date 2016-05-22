@@ -85,7 +85,7 @@ controller.on('facebook_optin', function(bot, message) {
 });
 
 // User wants help.
-controller.hears(["^http(.*)(.png|.jpg)"] , 'message_received', function(bot, message) {
+controller.hears(["^http(.*)(.png|.jpg|.gif)"] , 'message_received', function(bot, message) {
   Utils.showPicture(bot, message, message.text);
 });
 

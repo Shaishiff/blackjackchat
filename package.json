@@ -1,5 +1,5 @@
 {
-  "name": "beepboopfirstbot",
+  "name": "BlackjackChat",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -7,19 +7,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Shaishiff/beepboopfirstbot.git"
+    "url": "git+https://github.com/Shaishiff/blackjackchat.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Shaishiff/beepboopfirstbot/issues"
+    "url": "https://github.com/Shaishiff/blackjackchat/issues"
   },
-  "homepage": "https://github.com/Shaishiff/beepboopfirstbot#readme",
+  "homepage": "https://github.com/Shaishiff/blackjackchat#readme",
   "description": "",
   "dependencies": {
     "botkit": "^0.1.1",
     "dateformat": "^1.0.12",
     "mongodb": "^2.1.18",
+    "mysql": "^2.10.2",
     "request": "^2.72.0"
   }
 }

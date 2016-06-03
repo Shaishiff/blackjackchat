@@ -1,0 +1,4 @@
+Collections for blackjack chat:
+user_balance
+user_event_log
+user_game

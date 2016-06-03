@@ -1,636 +1,218 @@
 "use strict";
 
-var request = require('request');
 var Consts = require('./consts');
 var Sentences = require('./sentences');
-var Api = require('./mockApi');
-var MongoClient = require('mongodb').MongoClient;
-var DateFormat = require('dateformat');
+var MongoHelper = require('./mongoHelper');
+var HttpHelper = require('./httpHelper');
+var Deck = require('./deck');
+var userInfoCache = {};
+var utils = {};
 
-function insertUserInfoToMongo(userInfo, callback) {
-  console.log("insertUserInfoToMongo: " + Consts.MONGODB_URL);
-  MongoClient.connect(Consts.MONGODB_URL, function(err, db) {
-    console.log("Connected correctly to server: " + err);
-    var col = db.collection(Consts.MONGODB_USER_INFO_COL);
-    console.log("found the collection");
-    col.insertOne(userInfo, function(err, r) {
-      console.log("insert complete: " + err);
-      db.close();
-      console.log("db closed");
-      callback();
-    });
+utils.getCardImage = function(userId, callback) {
+  Deck.getCardFromDeck(userId, function(cardFromDeck) {
+    // Create the card's image url.
+    var cardImageUrl = Consts.CARDS_IMAGE_BASE_URL + cardFromDeck + ".png";
+    callback(cardImageUrl);
   });
 }
 
-function getUserInfoFromMongo(userId, callback) {
-  console.log("getUserInfoFromMongo: " + Consts.MONGODB_URL);
-  MongoClient.connect(Consts.MONGODB_URL, function(err, db) {
-    console.log("Connected correctly to server: " + err);
-    var col = db.collection(Consts.MONGODB_USER_INFO_COL);
-    console.log("found the collection: " + err);
-    col.find({user_id : userId}).limit(1).toArray(function(err, docs) {
-      db.close();
-      if (docs instanceof Array && docs.length == 1) {
-        console.log("Found the user in the mongo: " + docs[0]);
-        callback(docs[0]);
+utils.getUserLang = function(userId) {
+  if (userInfoCache[userId] && userInfoCache[userId].lang) {
+    return userInfoCache[userId].lang;
+  } else {
+    return "";
+  }
+}
+
+utils.setUserLang = function(userId, lang) {
+  if (typeof userInfoCache[userId] === "undefined") {
+    userInfoCache[userId] = {};
+  }
+  userInfoCache[userId].lang = lang;
+}
+
+utils.getSentence = function(sentenceKey) {
+  if (typeof Sentences[sentenceKey] === "undefined") return "";
+  if (typeof Sentences[sentenceKey] === "string") return Sentences[sentenceKey];
+  return "";
+}
+
+utils.getLatLonFromAddress = function(address, callback) {
+  console.log("Finding lat and lon for address: " + address);
+  var url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + address;
+  url += "&key=" + process.env.GOOGLE_API_KEY;
+  HttpHelper.httpGetJson(url, function(jsonResponse) {
+    console.log("" + jsonResponse);
+    console.log("" + jsonResponse.status);
+    console.log("" + jsonResponse.results);
+    console.log("" + jsonResponse.results.length);
+    console.log("" + jsonResponse.results[0].geometry);
+    console.log("" + jsonResponse.results[0].geometry.location);
+    if (jsonResponse &&
+      jsonResponse.status &&
+      jsonResponse.status == "OK" &&
+      jsonResponse.results &&
+      jsonResponse.results.length > 0 &&
+      jsonResponse.results[0].geometry &&
+      jsonResponse.results[0].geometry.location &&
+      jsonResponse.results[0].geometry.location.lat &&
+      jsonResponse.results[0].geometry.location.lng) {
+      var lat = jsonResponse.results[0].geometry.location.lat;
+      var lng = jsonResponse.results[0].geometry.location.lng;
+      console.log("Found lat and long from address: " + lat + "," + lng)
+      callback(lat, lng);
+    } else {
+      callback(null, null);
+    }
+  });
+}
+
+utils.isUserRequestedToStop = function(userText) {
+  if (typeof userText !== "string") return false;
+  var bStop = (Sentences.user_requested_to_stop.indexOf(userText) != -1);
+  if (bStop) {
+    console.log("User requested to stop: " + userText);
+  }
+  return bStop;
+}
+
+utils.isNormalIntegerFromMinToMax = function(str, min, max) {
+  // This will work only from 0 to 9 (min/max).
+  var regExStr = "[" + min + "-" + max + "]";
+  var bRegEx = (new RegExp(regExStr, "i")).test(str);
+  console.log("Output of regex test: " + regExStr + " => " + bRegEx + " - for str: " + str);
+  return bRegEx;
+}
+
+utils.getTimeDbNameFromText = function(userText) {
+  console.log("getTimeDbNameFromText - " + userText);
+  if (utils.isNormalIntegerFromMinToMax(userText, 1, Consts.TIMES.length)) {
+    return Consts.TIMES[parseInt(userText) - 1].db_name;
+  }
+  for(var i = 0; i < Consts.TIMES.length; i++) {
+    var time = Consts.TIMES[i];
+    console.log("getTimeDbNameFromText: " + JSON.stringify(time));
+    if (time.title_en == userText ||
+      time.title == userText ||
+      time.payload == userText) {
+      return time.db_name;
+    }
+  }
+  console.log("getTimeDbNameFromText - could not find user text: " + userText);
+  return Consts.INVALID_NUM;
+}
+
+utils.getCategoryDbNameFromText = function(userText) {
+  console.log("getCategoryDbNameFromText - " + userText);
+  if (utils.isNormalIntegerFromMinToMax(userText, 1, Consts.CATEGORIES.length)) {
+    return Consts.CATEGORIES[parseInt(userText) - 1].db_name;
+  }
+  for(var i = 0; i < Consts.CATEGORIES.length; i++) {
+    var cat = Consts.CATEGORIES[i];
+    if (cat.title_en == userText ||
+      cat.title == userText ||
+      cat.payload == userText) {
+      return cat.db_name;
+    }
+  }
+  console.log("getCategoryDbNameFromText - could not find user text: " + userText);
+  return "";
+}
+
+// Compute the edit distance between the two given strings
+// Taken from: https://gist.github.com/andrei-m/982927
+utils.getEditDistance = function(a, b) {
+  if(a.length == 0) return b.length;
+  if(b.length == 0) return a.length;
+  var matrix = [];
+  // increment along the first column of each row
+  var i;
+  for(i = 0; i <= b.length; i++){
+    matrix[i] = [i];
+  }
+  // increment each column in the first row
+  var j;
+  for(j = 0; j <= a.length; j++){
+    matrix[0][j] = j;
+  }
+  // Fill in the rest of the matrix
+  for(i = 1; i <= b.length; i++){
+    for(j = 1; j <= a.length; j++){
+      if(b.charAt(i-1) == a.charAt(j-1)){
+        matrix[i][j] = matrix[i-1][j-1];
       } else {
-        callback();
-      }
-    });
-  });
-}
-
-function sendToAnalyticsInternal(sender, text, direction) {
-  console.log("sendToAnalyticsInternal from sender " + sender + " with text: " + text);
-  request({
-      url: Consts.ANALYTICS_API,
-      qs: {
-        token: process.env.ANALYTICS_TOKEN
-      },
-      method: 'POST',
-      json: {
-        message: {
-          text: text,
-          message_type: direction,
-          user_id: sender,
-          conversation_id: sender + "-" + DateFormat(new Date(), "dd_mm_yy")
-        }
-      }
-    },
-    function(error, response, body) {
-      if (error) {
-        console.log('Error sending message to analytics: ', error);
-      } else if (response.body.error) {
-        console.log('Error in body response when sending message to analytics: ', response.body.error);
-      }
-    });
-}
-
-function sendWelcomeMessage() {
-  request({
-    url: Consts.FACEBOOK_WELCOME_MSG_URL,
-    method: 'POST',
-    json: {
-      setting_type: "call_to_actions",
-      thread_state: "new_thread",
-      call_to_actions: [{
-        message: {
-          text: Sentences.page_welcome_msg
-        }
-      }]
-    }
-  }, function(error, response, body) {
-    if (error) {
-      console.log('Error sending welcome message: ', error);
-    } else if (response.body.error) {
-      console.log('Error in response body when sending welcome message: ', response.body.error);
-    }
-  });
-}
-
-function rpadwithspace(string, length) {
-  var str = string;
-  while (str.length < length)
-    str = str + " ";
-  return str;
-}
-
-function lpadwithspace(string, length) {
-  var str = string;
-  while (str.length < length)
-    str = " " + str;
-  return str;
-}
-
-function sortTeamsByPoints(teams) {
-  return teams.sort(function(a, b) {
-    return (a.points > b.points) ? -1 : ((b.points > a.points) ? 1 : 0);
-  });
-}
-
-function buildGroupsText(groups) {
-  var TEAM_NAME_PADDING = 20;
-  var text_array = [];
-  if (groups instanceof Array) {
-    for (var iGroup = 0; iGroup < groups.length; iGroup++) {
-      var text = "";
-      var curGroup = groups[iGroup];
-      if (curGroup.teams instanceof Array) {
-        var teams = sortTeamsByPoints(curGroup.teams);
-        text += rpadwithspace("Group " + curGroup.name, TEAM_NAME_PADDING);
-        text += " P  W  D  L  F  A  +/-  Pts\n";
-        //text += "----------------------------------------------------\n";
-        for (var iTeam = 0; iTeam < teams.length; iTeam++) {
-          var curTeam = teams[iTeam];
-          text += rpadwithspace(curTeam.name, TEAM_NAME_PADDING);
-          text += lpadwithspace("" + curTeam.games_played, 2);
-          text += lpadwithspace("" + curTeam.games_won, 3);
-          text += lpadwithspace("" + curTeam.games_draw, 3);
-          text += lpadwithspace("" + curTeam.games_lost, 3);
-          text += lpadwithspace("" + curTeam.goals_scored, 3);
-          text += lpadwithspace("" + curTeam.goals_taken, 3);
-          text += lpadwithspace("" + (curTeam.goals_scored - curTeam.goals_taken), 4);
-          text += lpadwithspace("" + curTeam.points, 5);
-          text += "\n";
-        }
-        //text += "----------------------------------------------------\n";
-        text_array[iGroup] = text;
+        matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, // substitution
+                       Math.min(matrix[i][j-1] + 1, // insertion
+                       matrix[i-1][j] + 1)); // deletion
       }
     }
   }
-  return text_array;
+  return matrix[b.length][a.length];
+};
+
+utils.changeDateFormat = function(str) {
+  // "10/06/2016 22:00" -> "06/10/2016 22:00"
+  var date = str.split(" ")[0];
+  var hour = str.split(" ")[1];
+  var date_new_format = date.split("/")[1] + "/" + date.split("/")[0] + "/" + date.split("/")[2];
+  return date_new_format + " " + hour;
 }
 
-function buildGroupsObj(groups) {
-  var allElements = [];
-  if (groups instanceof Array) {
-    for (var iGroup = 0; iGroup < groups.length; iGroup++) {
-      var curGroup = groups[iGroup];
-      if (curGroup.teams instanceof Array) {
-        var elements = [];
-        var teams = sortTeamsByPoints(curGroup.teams);
-        for (var iTeam = 0; iTeam < teams.length; iTeam++) {
-          var curElement = {};
-          var curTeam = teams[iTeam];
-          curElement.title = curGroup.name + (iTeam + 1) + " " + curTeam.name;
-          curElement.image_url = curTeam.flag_url;
-          curElement.subtitle = "Pts: " + curTeam.points + ", Plyd: " + curTeam.games_played + ", W:" + curTeam.games_won + ", D:" + curTeam.games_draw + ", L:" + curTeam.games_lost + ", GlsF:" + curTeam.goals_scored + ", GlsA:" + curTeam.goals_taken + ", Gls(+/-): " + (curTeam.goals_scored - curTeam.goals_taken);
-          curElement.buttons = [{
-            type: 'postback',
-            title: 'Show Teams Games',
-            payload: 'show_games_for_' + curTeam.name
-          }];
-          elements[iTeam] = curElement;
-        }
-      }
-      allElements[iGroup] = elements;
-    }
-  }
-  return allElements;
-}
-
-function buildGameTeamObj(team, game) {
-  var teamObj = {};
-  teamObj.title = team.name + (game.status !== "Prematch" ? " (" + team.goals.length + ")" : "");
-  teamObj.image_url = team.flag_url;
-  teamObj.subtitle = "";
-  if (team.goals instanceof Array) {
-    for (var iGoal = 0; iGoal < team.goals.length; iGoal++) {
-      var curGoal = team.goals[iGoal];
-      if (iGoal > 0) teamObj.subtitle += ", ";
-      teamObj.subtitle += curGoal.time + " " + curGoal.player_name + (curGoal.notes && curGoal.notes.length > 0 ? " (" + curGoal.notes + ")" : "");
-    }
-  }
-  teamObj.buttons = [];
-  if (game.status !== "Over") {
-    teamObj.buttons.push({
-      'type': 'web_url',
-      'title': 'Bet on ' + team.name,
-      'url': 'http://sports.winner.com/en/t/30901/Euro-2016-Matches'
-    });
-  }
-  teamObj.buttons.push({
-    'type': 'postback',
-    'title': 'Set notifications',
-    'payload': 'set_notifications_for_team_' + team.name
-  });
-  return teamObj;
-}
-
-function buildGameVsObj(game) {
-  var vsObj = {};
-  vsObj.title = game.status;
-  if (game.status === "Over") {
-    vsObj.title += " - ";
-    if (game.home_team.goals.length > game.away_team.goals.length) {
-      vsObj.title += game.home_team.name + " won";
-    } else if (game.home_team.goals.length < game.away_team.goals.length) {
-      vsObj.title += game.away_team.name + " won";
-    } else {
-      vsObj.title += " Draw";
-    }
-  }
-  if (game.status === "Prematch") {
-    vsObj.subtitle = "Game will start ";
-  } else {
-    vsObj.subtitle = "Game started ";
-  }
-  vsObj.subtitle += game.time + " at " + game.location;
-  vsObj.image_url = game.location_image_url;
-  if (game.status !== "Over") {
-    vsObj.buttons = [{
-      'type': 'web_url',
-      'title': 'Bet on this game',
-      'url': 'http://sports.winner.com/en/t/30901/Euro-2016-Matches'
-    }, {
-      'type': 'postback',
-      'title': 'Set notifications',
-      'payload': 'set_notifications_for_game_' + game.id
-    }];
-  }
-  return vsObj;
-}
-
-function buildGamesObj(games) {
-  var allElements = [];
-  if (games instanceof Array) {
-    for (var iGame = 0; iGame < games.length; iGame++) {
-      var curGame = games[iGame];
-      var elements = [];
-      elements[0] = buildGameTeamObj(curGame.home_team, curGame);
-      elements[1] = buildGameVsObj(curGame);
-      elements[2] = buildGameTeamObj(curGame.away_team, curGame);
-      allElements[iGame] = elements;
-    }
-  }
-  return allElements;
-}
-
-function showGroupsToUserAsText(bot, message) {
-  Api.getGroups(function(groups) {
-    var text_array = buildGroupsText(groups);
-    if (text_array instanceof Array) {
-      for (var iText = 0; iText < text_array.length; iText++) {
-        var curText = text_array[iText];
-        console.log(curText);
-        //var textToSend = (typeof curText === "string" && curText.length > 0) ? curText : 'Not sure about the groups now...sorry :(';
-        bot.reply(message, curText);
-      }
-    }
-  });
-}
-
-/*
-function showSpecificGroupToUserInternal(bot, message, groups, groupIndex) {
-  if (typeof groupIndex !== "number") groupIndex = 0;
-  if (groupIndex >= groups.length) return;
-  console.log("Showing group index " + groupIndex);
-  bot.reply(message, {
-      attachment: {
-        type: 'template';
-        payload: {
-          template_type: 'generic',
-          elements: groups[groupIndex]
-        }
-      }
-    },
-    function() {
-      var newGroupIndex = groupIndex + 1;
-      showSpecificGroupToUserInternal(bot, message, groups, newGroupIndex);
-    });
-}
-*/
-
-function showGroupsToUserInternal(bot, message, getterParams) {
-  Api.getGroups(function(groups) {
-    var obj_array = buildGroupsObj(groups);
-    if (obj_array instanceof Array && obj_array.length > 0) {
-      sendMultipleAttachmentsOneByOne(bot, message, obj_array);
-    }
-  }, getterParams);
-}
-
-function showPictureInternalImageOnly(bot, message, url) {
-  bot.reply(message, {
-    attachment: {
-      type: 'image',
-      payload: {
-        url: url
-      }
-    }
-  }, function() {
-    showPictureInternalWithButtons(bot, message, url);    
-  });
-}
-
-function showPictureInternalWithButtons(bot, message, url) {
-  bot.reply(message, {
-    attachment: {
-      type: 'template',
-      payload: {
-        template_type: 'generic',
-        elements: [{
-          title: "Picture with buttons",
-          image_url: url,
-          buttons: [{
-            type: 'web_url',
-            title: 'CTA 1',
-            url: url
-          },
-          {
-            type: 'web_url',
-            title: 'CTA 2',
-            url: url
-          }]
-        }]
-      }
-    }
-  }, function() {
-    showPictureInternalButtonOnly(bot, message, url);    
-  });
-}
-
-function showPictureInternalButtonOnly(bot, message, url) {
-  bot.reply(message, {
-    attachment: {
-      type: 'template',
-      payload: {
-        "template_type":"button",
-        "text":"This is just text with buttons",
-        "buttons":[
-          {
-            "type":"web_url",
-            "url":"https://google.com",
-            "title":"CTA 1"
-          },
-          {
-            "type":"postback",
-            "title":"CTA 2",
-            "payload":"USER_DEFINED_PAYLOAD"
-          }
-        ]
-      }
-    }
-  }, function() {
-    showPictureInternalPictureWithButton(bot, message, url);    
-  });
-}
-
-function showPictureInternalPictureWithButton(bot, message, url) {
-  bot.reply(message, {
-    attachment: {
-      type: 'template',
-      payload: {
-        template_type: 'generic',
-        elements: [{
-          title: "Multiple Pictures",
-          image_url: url,
-          buttons: [{
-            type: 'web_url',
-            title: 'CTA 1',
-            url: url
-          },
-          {
-            type: 'web_url',
-            title: 'CTA 2',
-            url: url
-          }]
-        },
-        {
-          title: "Multiple Pictures",
-          image_url: url,
-          buttons: [{
-            type: 'web_url',
-            title: 'CTA 1',
-            url: url
-          },
-          {
-            type: 'web_url',
-            title: 'CTA 2',
-            url: url
-          }]
-        },
-        {
-          title: "Multiple Pictures",
-          image_url: url,
-          buttons: [{
-            type: 'web_url',
-            title: 'CTA 1',
-            url: url
-          },
-          {
-            type: 'web_url',
-            title: 'CTA 2',
-            url: url
-          }]
-        }]
-      }
-    }
-  });
-}
-
-function sendMultipleAttachmentsOneByOne(bot, message, arr, index) {
-  if (typeof index !== "number") index = 0;
-  if (index >= arr.length) return;
-  console.log("Showing index " + index);
-  bot.reply(message, {
-      attachment: {
-        type: 'template',
-        payload: {
-          template_type: 'generic',
-          elements: arr[index]
-        }
-      }
-    },
-    function() {
-      var newIndex = index + 1;
-      sendMultipleAttachmentsOneByOne(bot, message, arr, newIndex);
-    });
-}
-
-function showGamesToUserInternal(bot, message, getter, getterParams) {
-  console.log("showGamesToUserInternal started");
-  getter(function(games) {
-    console.log("showGamesToUserInternal getter callback");
-    var obj_array = buildGamesObj(games);
-    if (obj_array instanceof Array) {
-      sendMultipleAttachmentsOneByOne(bot, message, obj_array);
-      /*
-      for (var iObj = 0; iObj < obj_array.length; iObj++) {
-        var curObj = obj_array[iObj];
-        var attachment = {};
-        attachment.type = 'template';
-        attachment.payload = {
-          template_type: 'generic',
-          elements: curObj
-        };
-        (function() {
-          var timeout = 2000 * iObj;
-          var msgAttachment = attachment;
-          setTimeout(function() {
-            bot.reply(message, {
-              attachment: msgAttachment
-            });
-          }, timeout);
-        }());
-      }
-      */
-    } else {
-      bot.reply(message, "Sorry no such games...");
-    }
-  }, getterParams);
-}
-
-function httpGetJson(url, callback) {
-  request({
-    url: url,
-    method: 'GET'
-  }, function(error, response, body) {
-    if (error) {
-      console.error('Error http get ' + url, error);
-    } else if (response.body.error) {
-      console.error('Error in response body for http get ' + url, response.body.error);
-    } else {
-      try {
-        console.log(response.body);
-        var jsonResponse = JSON.parse(response.body);
-        callback(jsonResponse);
-        return;
-      } catch (e) {
-        console.error('Error parsing json response from http get ' + url);
-      }
-    }
-    callback();
-  });
-}
-
-function httpPostJson(url, headers, body, callback) {
-  request({
-    url: url,
-    method: 'POST',
-    headers: headers,
-    bod: body
-  }, function(error, response, body) {
-    if (error) {
-      console.error('Error http post ' + url, error);
-    } else if (response.body.error) {
-      console.error('Error in response body for http post ' + url, response.body.error);
-    } else {
-      try {
-        console.log(response.body);
-        var jsonResponse = JSON.parse(response.body);
-        callback(jsonResponse);
-        return;
-      } catch (e) {
-        console.error('Error parsing json response from http post ' + url);
-      }
-    }
-    callback();
-  });
-}
-
-// see docs here: http://docs.cyrano.apiary.io
-function translateMessage(userInfo, text, direction, callback) {
-  if (!process.env.CYRANOAPI_HOST ||
-    !process.env.CYRANOAPI_TOKEN ||
-    !userInfo ||
-    typeof text !== "string" ||
-    text.length === 0) {
-    console.log("translateMessage: don't have all the info needed to translate via API");
-    callback();
+utils.getUserInfo = function(userId, callback) {
+  if (typeof userInfoCache[userId] !== "undefined" &&
+    typeof userInfoCache[userId].info !== "undefined" &&
+    typeof userInfoCache[userId].info.first_name === "string" &&
+    typeof userInfoCache[userId].info.last_name === "string" &&
+    typeof userInfoCache[userId].info.gender === "string") {
+    console.log("getUserInfo - Have the user info in the cache.");
+    callback(userInfoCache[userId].info);
     return;
   }
-  console.log("translateMessage: building request");
-  var url = process.env.CYRANOAPI_HOST + '/bots/euro2016/en/messages/' + direction;
-  var headers = {
-    'Content-Type': 'application/json',
-    'Authorization': 'cyrano:' + process.env.CYRANOAPI_TOKEN
-  };
-  var body = JSON.stringify({
-    user: {
-      id: userInfo.user_id,
-      gender: userInfo.gender
-    },
-    text: text
-  });
-  httpPostJson(url, headers, body, callback);
-}
-
-function translateUserMessageInternal(userInfo, text, callback) {
-  translateMessage(userInfo, text, "in", callback)
-}
-
-function translateBotMessageInternal(userInfo, text, callback) {
-  translateMessage(userInfo, text, "out", callback)
-}
-
-function findSuitableIntentInternal(message) {
-  if (message && message.nlp && message.nlp.intents && message.nlp.intents.length > 0) {
-    console.log("Found " + message.nlp.intents.length + " possible intents");
-    var sortedIntents = message.nlp.intents.sort(function(a, b) {
-      return (a.score > b.score) ? -1 : ((b.score > a.score) ? 1 : 0);
-    });
-    if ((sortedIntents[0].score > Consts.LUIS_MIN_SCORE) && (sortedIntents[0].intent !== "None")) {
-      return sortedIntents[0].intent;
+  console.log("getUserInfo - Don't have the user info in the cache, getting it from Mongo.");
+  MongoHelper.getUserInfoFromMongo(userId, function(mongoUserInfo) {
+    if (typeof mongoUserInfo !== "undefined" &&
+      mongoUserInfo.first_name &&
+      mongoUserInfo.last_name &&
+      mongoUserInfo.gender) {
+      console.log("getUserInfo - Got the user info from Mongo.");
+      userInfoCache[userId] = {};
+      userInfoCache[userId].info = {};
+      userInfoCache[userId].info = mongoUserInfo;
+      callback(mongoUserInfo);
     } else {
-      console.log("Score for intent " + sortedIntents[0].intent + " was too low: " + sortedIntents[0].score);
-    }
-  } else {
-    console.log("No NLP data available so cant find intent");
-  }
-  return null;
-}
-
-function queryLuisNLP(message, callback) {
-  if (!process.env.LUIS_NLP_TOKEN) {
-    callback();
-    return;
-  }
-  httpGetJson(Consts.LUIS_NLP_API + message.text, function(jsonResponse) {
-    message.nlp = jsonResponse;
-    callback(message);
-  });
-}
-
-function getUserInfoInternal(userId, callback) {
-  getUserInfoFromMongo(userId, function(userInfo) {
-    if (typeof userInfo !== "undefined") {
-      console.log("Got the user info from mongoDB");
-      callback(userInfo);
-    } else {
-      console.log("Can't find the user info in the mongoDB");
-      httpGetJson(Consts.FACEBOOK_USER_PROFILE_API.replace("<USER_ID>", userId), function(userInfo) {
-        userInfo.user_id = userId;
-        insertUserInfoToMongo(userInfo, callback);
+      console.log("getUserInfo - Can't find the user info in the Mongo, calling the facebook API.");
+      HttpHelper.httpGetJson(Consts.FACEBOOK_USER_PROFILE_API.replace("<USER_ID>", userId), function(fbUserInfo) {
+        if (typeof fbUserInfo === "undefined") {
+          console.log("getUserInfo - Can't get the user info from the facebook API.");
+          callback(null);
+        } else {
+          console.log("getUserInfo - Got the user info from the facebook API.");
+          fbUserInfo.user_id = userId;
+          userInfoCache[userId].info = fbUserInfo;
+          MongoHelper.insertUserInfoToMongo(fbUserInfo, callback);
+        }
       });
     }
   });
 }
 
-var utils = {
-  setWelcomeMessage: function() {
-    sendWelcomeMessage();
-  },
-  randomFromArray: function(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
-  },
-  sendUserMsgToAnalytics: function(sender, text) {
-    sendToAnalyticsInternal(sender, text, "incoming");
-  },
-  sendBotMsgToAnalytics: function(sender, text) {
-    sendToAnalyticsInternal(sender, text, "outgoing");
-  },
-  sendToAnalytics: function(sender, text, direction) {
-    sendToAnalyticsInternal(sender, text, direction);
-  },
-  addInfoFromNLP: function(message, callback) {
-    if (message.text && message.text.length > 0) {
-      queryLuisNLP(message, callback);
-    } else {
-      callback(message);
-    }
-  },
-  showGroupsToUser: function(bot, message) {
-    showGroupsToUserInternal(bot, message);
-  },
-  showGamesToUser: function(bot, message, getter, getterParams) {
-    showGamesToUserInternal(bot, message, getter, getterParams);
-  },
-  getUserInfo: function(userId, callback) {
-    getUserInfoInternal(userId, callback);
-  },
-  findSuitableIntent: function(message) {
-    return findSuitableIntentInternal(message);
-  },
-  translateUserMessage: function (userInfo, text, callback) {
-    translateUserMessageInternal(userInfo, text, callback);
-  },
-  translateBotMessage: function (userInfo, text, callback) {
-    translateBotMessageInternal(userInfo, text, callback);
-  },
-  showPicture: function(bot, message, url) {
-    showPictureInternalImageOnly(bot, message, url);
+utils.randomFromArray = function(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+utils.shuffleArray = function(array) {
+  var currentIndex = array.length, temporaryValue, randomIndex;
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
   }
+  return array;
 }
 
 module.exports = utils;

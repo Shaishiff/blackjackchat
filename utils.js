@@ -8,12 +8,9 @@ var Deck = require('./deck');
 var userInfoCache = {};
 var utils = {};
 
-utils.getCardImage = function(userId, callback) {
-  Deck.getCardFromDeck(userId, function(cardFromDeck) {
-    // Create the card's image url.
-    var cardImageUrl = Consts.CARDS_IMAGE_BASE_URL + cardFromDeck + ".png";
-    callback(cardImageUrl);
-  });
+utils.getCardImage = function(cardFromDeck, callback) {
+  var cardImageUrl = Consts.CARDS_IMAGE_BASE_URL + cardFromDeck + ".png";
+  callback(cardImageUrl);
 }
 
 utils.getUserLang = function(userId) {

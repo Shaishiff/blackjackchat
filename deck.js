@@ -2,9 +2,12 @@
 
 var deck = {};
 
-deck.getCardFromDeck = function(userId, callback) {
+deck.getCard = function(userId, callback) {
 	// TODO: implement logic to get next card from this specific user's deck.
-	callback("7_D");
+	callback({
+		suit: "H",
+		rank: 7
+	});
 }
 
 module.exports = deck;

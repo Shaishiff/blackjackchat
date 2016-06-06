@@ -16,8 +16,8 @@ var bot = controller.spawn({});
 
 // Set up the welcome message.
 if (process.env.FACEBOOK_PAGE_ACCESS_TOKEN) {
-  FacebookHelper.setWelcomeMessageText("Hey welcome !");
-  //FacebookHelper.setWelcomeMessageStructuredMessage(View.buildShouldIDealYouIn());
+  //FacebookHelper.setWelcomeMessageText("Hey welcome !");
+  FacebookHelper.setWelcomeMessageButtonsMessage(Utils.getSentence("should_i_deal_you_in"), View.buildShouldIDealYouInButtons());
 }
 
 // Start web server.
@@ -70,7 +70,7 @@ controller.middleware.send.use(function(bot, message, next) {
 });
 
 // Main menu.
-controller.hears(["start"], 'message_received', function(bot, message) {
+controller.hears(["start","deal"], 'message_received', function(bot, message) {
   if (PostBackHelper.isPostBack(message)) return;
   View.showShouldIDealYouIn(bot, message);
 });

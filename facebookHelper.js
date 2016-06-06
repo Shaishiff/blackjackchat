@@ -36,6 +36,30 @@ facebookHelper.setWelcomeMessageStructuredMessage = function(elements) {
   });
 }
 
+
+facebookHelper.setWelcomeMessageButtonsMessage = function(text, buttons) {
+  if (!(buttons instanceof Array)) {
+    buttons = [buttons];
+  }
+  Request({
+    url: Consts.FACEBOOK_WELCOME_MSG_URL,
+    method: 'POST',
+    json: {
+      setting_type: "call_to_actions",
+      thread_state: "new_thread",
+      call_to_actions: [{
+        message: facebookHelper.buildButtonTemplate(text, buttons)
+      }]
+    }
+  }, function(error, response, body) {
+    if (error) {
+      console.error('Error setting welcome message: ', error);
+    } else if (response.body.error) {
+      console.error('Error in response body when setting welcome message: ', response.body.error);
+    }
+  });
+}
+
 facebookHelper.setWelcomeMessageText = function(text) {
   Request({
     url: Consts.FACEBOOK_WELCOME_MSG_URL,

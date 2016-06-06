@@ -61,16 +61,54 @@ view.showWhatsYourMove = function(bot, message, callback) {
 		callback);
 }
 
+view.buildHowMuchToBetButtons = function() {
+	console.log("buildHowMuchToBetButtons");
+  var buttons = [];
+  buttons.push({
+    type: "postback",
+    title: "50",
+    payload: "showBet-50"
+  });
+  buttons.push({
+    type: "postback",
+    title: "100",
+    payload: "showBet-100"
+  });
+  buttons.push({
+    type: "postback",
+    title: "200",
+    payload: "showBet-200"
+  });
+  return buttons;
+}
+
+view.showHowMuchToBet = function(bot, message) {
+	console.log("showWhatsYourMove");
+	FacebookHelper.sendButtonTemplate(bot,
+		message,
+		Utils.getSentence("how_much_to_bet"),
+		view.buildHowMuchToBetButtons());
+}
+
+view.showBet = function(bot, message, bet) {
+	var actualBet = parseInt(bet);
+	Game.startNewGame(message.user, actualBet, function() {
+		view.showDealersCard(bot, message);
+	});
+}
+
 view.showDealYouInResponse = function(bot, message, response) {
 	console.log("showDealYouInResponse-" + response);
 	if (response === "yes") {
 		// We should deal the user in.
 		// The dealer starts.
-		Game.startNewGame(message.user, Consts.DEFAULT_BET_PER_GAME, function() {
-			view.showDealersCard(bot, message);
+		User.getUserBalance(message.user, function(balance) {
+			showUserBalance(bot, message, balance, function() {
+				view.showHowMuchToBet(bot, message);
+			});
 		});
 	} else if (response === "no") {
-		// We should NOT deal the user in.
+		FacebookHelper.sendText(bot, message, Utils.getSentence("tell_me_when_you_want_to_deal_in"));
 	} else {
 		// Invalid response...
 	}

@@ -2,6 +2,7 @@
 
 var Request = require('request');
 var Consts = require('./consts');
+var Utils = require('./utils');
 var facebookHelper = {};
 
 facebookHelper.setWelcomeMessageStructuredMessage = function(elements) {
@@ -57,20 +58,52 @@ facebookHelper.setWelcomeMessageText = function(text) {
   });
 }
 
+var validateGenericTemplate = function(elements) {
+  // Generic Template Limits:
+  // see https://developers.facebook.com/docs/messenger-platform/send-api-reference#guidelines
+  // Title: 80 characters
+  // Subtitle: 80 characters
+  // Call-to-action title: 20 characters
+  // Call-to-action items: 3 buttons
+  // Bubbles per message (horizontal scroll): 10 elements
+  while (elements.length > 10) {
+    elements.pop();
+  }
+  for(var i = 0; i < elements.length; i++) {
+    if (typeof elements[i].title === "string") {
+      elements[i].title = elements[i].title.substr(0, 80);
+    }
+    if (typeof elements[i].subtitle === "string") {
+      elements[i].subtitle = elements[i].subtitle.substr(0, 80);
+    }
+    if (Utils.isArray(elements[i].buttons)) {
+      while (elements[i].buttons.length > 3) {
+        elements[i].buttons.pop();
+      }
+      for (var j = 0; j < elements[i].buttons; j++) {
+        if (typeof elements[i].buttons[j].title === "string") {
+          elements[i].buttons[j].title = elements[i].buttons[j].title.substr(0, 20);
+        }
+      }
+    }
+  }
+  return elements;
+}
+
 facebookHelper.buildGenericTemplate = function(elements) {
   return {
     attachment: {
       type: 'template',
       payload: {
         template_type: 'generic',
-        elements: elements
+        elements: validateGenericTemplate(elements)
       }
     }
   }
 }
 
 facebookHelper.sendGenericTemplate = function(bot, message, elements, callback) {
-  if (!(elements instanceof Array)) {
+  if (!Utils.isArray(elements)) {
     elements = [elements];
   }
   bot.reply(message, facebookHelper.buildGenericTemplate(elements), callback);

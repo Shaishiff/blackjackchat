@@ -9,7 +9,7 @@ user.getUserBalance = function(userId, callback) {
 		userData[userId] = {};
 	}
 	if (typeof userData[userId].balance === "undefined") {
-		userData[userId].balance = Const.USER_INITIAL_BALANCE;
+		userData[userId].balance = Consts.USER_INITIAL_BALANCE;
 	}
 	callback(userData[userId].balance);
 }

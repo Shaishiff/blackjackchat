@@ -29,6 +29,7 @@ view.buildShouldIDealYouIn = function() {
 }
 
 view.showShouldIDealYouIn = function(bot, message) {
+	console.log("showShouldIDealYouIn");
 	FacebookHelper.sendButtonTemplate(bot,
 		message,
 		Utils.getSentence("should_i_deal_you_in"),
@@ -52,6 +53,7 @@ view.buildWhatsYourMoveButtons = function() {
 }
 
 view.showWhatsYourMove = function(bot, message, callback) {
+	console.log("showWhatsYourMove");
 	FacebookHelper.sendButtonTemplate(bot,
 		message,
 		Utils.getSentence("whats_your_move"),
@@ -60,6 +62,7 @@ view.showWhatsYourMove = function(bot, message, callback) {
 }
 
 view.showDealYouInResponse = function(bot, message, response) {
+	console.log("showDealYouInResponse-" + response);
 	if (response === "yes") {
 		// We should deal the user in.
 		// The dealer starts.
@@ -74,6 +77,7 @@ view.showDealYouInResponse = function(bot, message, response) {
 }
 
 var showGameSums = function(bot, message, gameData, callback) {
+	console.log("showGameSums");
 	var text = "";
 	if (typeof gameData[Consts.SIDES.player].sum !== "undefined" && gameData[Consts.SIDES.player].sum !== 0) {
 		if (text.length > 0) {
@@ -93,6 +97,7 @@ var showGameSums = function(bot, message, gameData, callback) {
 }
 
 var showUserBalance = function(bot, message, newBalance, callback) {
+	console.log("showUserBalance");
 	var text = Utils.getSentence("your_new_balance_is") + ": " + newBalance;
 	FacebookHelper.sendText(bot, message, text, function() {
 		callback();
@@ -100,6 +105,7 @@ var showUserBalance = function(bot, message, newBalance, callback) {
 }
 
 var showEndOfGame = function(bot, message, gameData) {
+	console.log("showEndOfGame");
 	var balanceChange = 0;
 	var text = "";
 	switch (gameData.result) {
@@ -138,6 +144,8 @@ var showEndOfGame = function(bot, message, gameData) {
 }
 
 var showNextMove = function(bot, message, gameData, nextMove) {
+	console.log("showNextMove");
+	console.log("NextMove: " + nextMove);
 	showGameSums(bot, message, gameData, function() {
 		switch(nextMove) {
 	    case Consts.GAME_NEXT_MOVE.player_card:
@@ -160,6 +168,7 @@ var showNextMove = function(bot, message, gameData, nextMove) {
 }
 
 view.showCard = function(bot, message, text, side) {
+	console.log("showCard");
 	FacebookHelper.sendText(bot, message, text, function() {
 		Deck.getCard(message.user, function(cardFromDeck){
 			Utils.getCardImage(cardFromDeck, function(imageUrl) {
@@ -183,6 +192,7 @@ view.showPlayersCard = function(bot, message) {
 }
 
 view.showPlayerStay = function(bot, message) {
+	console.log("showPlayerStay");
 	Game.handleUserStay(message.user, function(res) {
 		if (res) {
 			view.showDealersCard(bot, message);

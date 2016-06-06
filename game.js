@@ -63,10 +63,21 @@ var addCard = function(gameData, newCard, side, callback) {
 			gameData.result = (side === Consts.SIDES.dealer ? Consts.GAME_RESULT.dealer_bust : Consts.GAME_RESULT.player_bust);
 		}
 	}
-	if (side === Consts.SIDES.dealer) {
+	if (side === Consts.SIDES.player && gameData[side].sum === 21) {
+		// Player has 21.
+		// Dealer still needs to take cards.
+		gameData.state = Consts.GAME_STATE.player_hold;
+	} else if (side === Consts.SIDES.dealer) {
 		// This card was the dealers card but he's not busted yet.
 		// We need to decide what to do.
-		if (gameData.state === Consts.GAME_STATE.ongoing) {
+		if (gameData[Consts.SIDES.player].sum === 21 &&
+			gameData[Consts.SIDES.player].cards.length === 2 &&
+			gameData[Consts.SIDES.dealer].cards.length === 2) {
+			// Blackjack !
+			console.log("Player blackjack !");
+			gameData.state = Consts.GAME_STATE.finished;
+			gameData.result = Consts.GAME_RESULT.player_wins_with_blackjack;
+		} else if (gameData.state === Consts.GAME_STATE.ongoing) {
 			// User is still taking cards. Nothing to do right now.
 		} else if (gameData.state === Consts.GAME_STATE.player_hold) {
 			if (gameData[Consts.SIDES.dealer].sum < 17) {

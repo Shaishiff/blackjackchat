@@ -46,7 +46,7 @@ view.buildWhatsYourMoveButtons = function() {
   });
   buttons.push({
     type: "postback",
-    title: "Stay",
+    title: "Stand",
     payload: "showPlayerStay"
   });
   return buttons;
@@ -162,6 +162,10 @@ var showEndOfGame = function(bot, message, gameData) {
 		case Consts.GAME_RESULT.player_wins:
 			text = Utils.getSentence("end_of_game_player_wins");
 			balanceChange = gameData.bet;
+			break;
+		case Consts.GAME_RESULT.player_wins_with_blackjack:
+			text = Utils.getSentence("end_of_game_player_wins");
+			balanceChange = Consts.BLACKJACK_PAY_OUT*gameData.bet;
 			break;
 		case Consts.GAME_RESULT.draw:
 			text = Utils.getSentence("end_of_game_draw");

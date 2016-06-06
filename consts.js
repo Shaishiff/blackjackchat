@@ -11,6 +11,7 @@ var consts = {
 	CARDS_IMAGE_BASE_URL: "https://raw.githubusercontent.com/Shaishiff/blackjackchat/master/images/",
 	DEALER_IMAGE_URL: "https://raw.githubusercontent.com/Shaishiff/blackjackchat/master/images/dealer.png",
 	NUMBER_OF_DECKS: 1,
+	BLACKJACK_PAY_OUT: 1.5,
 	DECK_SUITS: ["H","D","C","S"],
 	DECK_RANKS: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
 	SIDES: {
@@ -34,7 +35,8 @@ var consts = {
 		player_bust: 2,
 		dealer_wins: 3,
 		player_wins: 4,
-		draw: 5
+		player_wins_with_blackjack: 5,
+		draw: 6
 	}
 };
 

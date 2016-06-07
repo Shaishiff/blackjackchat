@@ -4,7 +4,7 @@ var Consts = require('./consts');
 var MongoClient = require('mongodb').MongoClient;
 var mongoHelper = {};
 
-var insertIntoMongo = function(docToInsert, collection, callback) {
+mongoHelper.insert = function(docToInsert, collection, callback) {
 	MongoClient.connect(Consts.MONGO_DB_URL, function(errConnect, db) {
 		if(errConnect) {
 			console.error("insertIntoMongo - Could not connect to server with error: " + errConnect);
@@ -23,14 +23,14 @@ var insertIntoMongo = function(docToInsert, collection, callback) {
 	});
 }
 
-var upsertIntoMongo = function(docToFind, docToUpsert, collection, callback) {
+mongoHelper.upsert = function(docToFind, docToUpsert, collection, callback) {
 	MongoClient.connect(Consts.MONGO_DB_URL, function(errConnect, db) {
 		if(errConnect) {
 			console.error("upsertIntoMongo - Could not connect to server with error: " + errConnect);
 			callback(false);
 			return;
 		}
-		db.collection(collection).update(docToInsert, docToUpsert, {upsert: true}, function(errUpsert, r) {
+		db.collection(collection).update(docToFind, docToUpsert, {upsert: true}, function(errUpsert, r) {
 			db.close();
 			if(!errUpsert) {
 				console.error("upsertIntoMongo - Upsert complete with error: " + errUpsert);
@@ -42,11 +42,11 @@ var upsertIntoMongo = function(docToFind, docToUpsert, collection, callback) {
 	});
 }
 
-var getFromMongo = function(docToFind, collection, callback) {
+mongoHelper.get = function(docToFind, collection, callback) {
 	MongoClient.connect(Consts.MONGO_DB_URL, function(errConnect, db) {
 		if(errConnect) {
 			console.error("getFromMongo - Could not connect to server with error: " + errConnect);
-			callback();
+			callback(null);
 			return;
 		}
 		db.collection(collection).find(docToFind).limit(1).toArray(function(errFind, docs) {
@@ -56,22 +56,22 @@ var getFromMongo = function(docToFind, collection, callback) {
 				callback(docs[0]);
 			} else {
 				console.log("getFromMongo - Could not find the document: " + errFind);
-				callback();
+				callback(null);
 			}
 		});
 	});
 }
 
-mongoHelper.insertUserInfoToMongo = function(userInfo, callback) {
-	insertIntoMongo(userInfo, Consts.MONGO_DB_USER_INFO_COL, callback);
-}
+// mongoHelper.insertUserInfoToMongo = function(userInfo, callback) {
+// 	insertIntoMongo(userInfo, Consts.MONGO_DB_USER_INFO_COL, callback);
+// }
 
-mongoHelper.getUserInfoFromMongo = function(userId, callback) {
- 	getFromMongo({user_id : userId}, Consts.MONGO_DB_USER_INFO_COL, callback);
-}
+// mongoHelper.getUserInfoFromMongo = function(userId, callback) {
+//  	getFromMongo({user_id : userId}, Consts.MONGO_DB_USER_INFO_COL, callback);
+// }
 
-mongoHelper.upsertUserInfoToMongo = function(userId, userInfo, callback) {
-	upsertIntoMongo({user_id : userId}, userInfo, Consts.MONGO_DB_USER_INFO_COL, callback);
-}
+// mongoHelper.upsertUserInfoToMongo = function(userId, userInfo, callback) {
+// 	upsertIntoMongo({user_id : userId}, userInfo, Consts.MONGO_DB_USER_INFO_COL, callback);
+// }
 
 module.exports = mongoHelper;

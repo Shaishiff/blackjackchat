@@ -30,10 +30,13 @@ view.buildShouldIDealYouIn = function() {
 
 view.showShouldIDealYouIn = function(bot, message) {
 	console.log("showShouldIDealYouIn");
-	FacebookHelper.sendButtonTemplate(bot,
-		message,
-		Utils.getSentence("should_i_deal_you_in"),
-		view.buildShouldIDealYouInButtons());
+	User.getUserBalance(message.user, function(balance) {
+		var yourBalanceText = Utils.getSentence("your_new_balance_is") + ": " + balance;
+		FacebookHelper.sendButtonTemplate(bot,
+			message,
+			yourBalanceText + "\n" + Utils.getSentence("should_i_deal_you_in"),
+			view.buildShouldIDealYouInButtons());
+	});
 }
 
 view.buildWhatsYourMoveButtons = function() {
@@ -42,7 +45,7 @@ view.buildWhatsYourMoveButtons = function() {
   buttons.push({
     type: "postback",
     title: "Hit",
-    payload: "showPlayersCard"
+    payload: "showPlayerHit"
   });
   buttons.push({
     type: "postback",
@@ -91,27 +94,42 @@ view.showHowMuchToBet = function(bot, message) {
 }
 
 view.showBet = function(bot, message, bet) {
-	var actualBet = parseInt(bet);
-	Game.startNewGame(message.user, actualBet, function() {
-		view.showDealersCard(bot, message);
+	Game.getGameState(message.user, function(state) {
+		console.log("showBet - game is in state" + state);
+		if(state === Consts.GAME_STATE.ongoing || state === Consts.GAME_STATE.player_hold) {
+			// Game is in progress, can't set the bet now.
+			console.log("Game is in progress, can't set the bet now.");
+		} else {
+			var actualBet = parseInt(bet);
+			Game.startNewGame(message.user, actualBet, function() {
+				view.showDealersCard(bot, message);
+			});
+		}
 	});
 }
 
 view.showDealYouInResponse = function(bot, message, response) {
 	console.log("showDealYouInResponse-" + response);
-	if (response === "yes") {
-		// We should deal the user in.
-		// The dealer starts.
-		User.getUserBalance(message.user, function(balance) {
-			showUserBalance(bot, message, balance, function() {
-				view.showHowMuchToBet(bot, message);
-			});
-		});
-	} else if (response === "no") {
-		FacebookHelper.sendText(bot, message, Utils.getSentence("tell_me_when_you_want_to_deal_in"));
-	} else {
-		// Invalid response...
-	}
+	Game.getGameState(message.user, function(state) {
+		if(state === Consts.GAME_STATE.ongoing || state === Consts.GAME_STATE.player_hold) {
+			console.log("Game is in progress, can't start new game.");
+		} else {
+			if (response === "yes") {
+				// We should deal the user in.
+				// The dealer starts.
+				User.getUserBalance(message.user, function(balance) {
+					//showUserBalance(bot, message, balance, function() {
+					view.showHowMuchToBet(bot, message);
+					//});
+				});
+			} else if (response === "no") {
+				FacebookHelper.sendText(bot, message, Utils.getSentence("tell_me_when_you_want_to_deal_in"));
+			} else {
+				// Invalid response...
+				console.error("showDealYouInResponse - Invalid response");
+			}
+		}
+	});
 }
 
 var showGameSums = function(bot, message, gameData, callback) {
@@ -177,9 +195,7 @@ var showEndOfGame = function(bot, message, gameData) {
 	User.updateUserBalance(message.user, balanceChange, function(newBalance) {
 		FacebookHelper.sendText(bot, message, text, function() {
 			FacebookHelper.sendImage(bot, message, Consts.DEALER_IMAGE_URL, function() {
-				showUserBalance(bot, message, newBalance, function() {
-					view.showShouldIDealYouIn(bot, message);
-				});
+				view.showShouldIDealYouIn(bot, message);
 			});
 		});
 	});
@@ -212,10 +228,10 @@ var showNextMove = function(bot, message, gameData, nextMove) {
 view.showCard = function(bot, message, text, side) {
 	console.log("showCard");
 	FacebookHelper.sendText(bot, message, text, function() {
-		Deck.getCard(message.user, function(cardFromDeck){
+		Game.getCardFromDeck(message.user, function(cardFromDeck){
 			Utils.getCardImage(cardFromDeck, function(imageUrl) {
 				//FacebookHelper.sendImage(bot, message, imageUrl, function() {
-				FacebookHelper.sendText(bot, message, Deck.cardToString(cardFromDeck) + " (this should be an image)",  function() {
+				FacebookHelper.sendText(bot, message, Game.cardToString(cardFromDeck) + " (this should be an image)",  function() {
 					Game.handleNewCard(message.user, cardFromDeck, side, function(gameData, nextMove) {
 						showNextMove(bot, message, gameData, nextMove);
 					});
@@ -231,6 +247,15 @@ view.showDealersCard = function(bot, message) {
 
 view.showPlayersCard = function(bot, message) {
 	view.showCard(bot, message, Utils.getSentence("players_card"), Consts.SIDES.player);
+}
+
+view.showPlayerHit = function(bot, message) {
+	console.log("showPlayerHit");
+	Game.handleUserStay(message.user, function(res) {
+		if (res) {
+			view.showPlayersCard(bot, message);
+		}
+	});
 }
 
 view.showPlayerStay = function(bot, message) {

@@ -3,16 +3,15 @@
 var Consts = require('./consts');
 var MongoHelper = require('./mongoHelper');
 var View = require('./view');
+var Utils = require('./utils');
 var game = {};
-var gamesData = {};
 
 var getGameData = function(userId, callback) {
-	callback(gamesData[userId]);
+	MongoHelper.get({userId : userId}, Consts.MONGO_DB_GAME_INFO_COL, callback);
 }
 
 var setGameData = function(gameData, callback) {
-	gamesData[gameData.userId] = gameData;
-	callback(true);
+	MongoHelper.upsert({userId : gameData.userId}, gameData, Consts.MONGO_DB_GAME_INFO_COL, callback);
 }
 
 var decideOnNextMove = function(gameData) {
@@ -126,10 +125,23 @@ game.handleNewCard = function(userId, newCard, side, callback) {
 	});
 }
 
+game.handleUserHit = function(userId, callback) {
+	getGameData(userId, function(gameData) {
+		if (typeof gameData === "undefined" || gameData.state !== Consts.GAME_STATE.ongoing) {
+			// This should not happen...
+			console.log("handleUserHit - got this in an irrelevant state.")
+			callback(false);
+		} else {
+			callback(true);
+		}
+	});
+}
+
 game.handleUserStay = function(userId, callback) {
 	getGameData(userId, function(gameData) {
 		if (typeof gameData === "undefined" || gameData.state !== Consts.GAME_STATE.ongoing) {
 			// This should not happen...
+			console.log("handleUserStay - got this in an irrelevant state.")
 			callback(false);
 		} else {
 			gameData.state = Consts.GAME_STATE.player_hold;
@@ -137,6 +149,58 @@ game.handleUserStay = function(userId, callback) {
 				callback(true);
 			});
 		}
+	});
+}
+
+game.getGameState = function(userId, callback) {
+	getGameData(userId, function(gameData) {
+		if (gameData && typeof gameData !== "undefined" && typeof gameData.state !== "undefined") {
+			callback(gameData.state);
+		} else {
+			callback(null);
+		}
+	});
+}
+
+game.cardToString = function(card) {
+	return "" + card.suit + "_" + card.rank;
+}
+
+var createRandomCard = function(gameData) {
+	var randomSuit = Utils.randomFromArray(Consts.DECK_SUITS);
+	var randomRank = Utils.randomFromArray(Consts.DECK_RANKS);
+	var randomCard = {
+		suit: randomSuit,
+		rank: randomRank
+	};
+	if (!isPossibleCard(gameData, randomCard)) {
+		// This card has already being dealt too many times.
+		console.log("This card has already being dealt too many times: " + game.cardToString(randomCard));
+		return createRandomCard(gameData);
+	} else {
+		// New card which can be dealt.
+		return randomCard;
+	}
+}
+
+var isPossibleCard = function(gameData, newCard) {
+	var timesCardWadDealt = 0;
+	for (var i = 0; i < gameData[Consts.SIDES.dealer].cards.length; i++) {
+		var dealtCard = gameData[Consts.SIDES.dealer].cards[i];
+		timesCardWadDealt += ((dealtCard.suit === newCard.suit) && (dealtCard.rank === newCard.rank));
+	}
+	for (var i = 0; i < gameData[Consts.SIDES.player].cards.length; i++) {
+		var dealtCard = gameData[Consts.SIDES.player].cards[i];
+		timesCardWadDealt += ((dealtCard.suit === newCard.suit) && (dealtCard.rank === newCard.rank));
+	}
+	return (timesCardWadDealt < Consts.NUMBER_OF_DECKS);
+}
+
+game.getCardFromDeck = function(userId, callback) {
+	getGameData(userId, function(gameData) {
+		var newCard = createRandomCard(gameData);
+		console.log("New card to be dealt: " + game.cardToString(newCard));
+		callback(newCard);
 	});
 }
 

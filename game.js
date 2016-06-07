@@ -17,14 +17,19 @@ var setGameData = function(gameData, callback) {
 var decideOnNextMove = function(gameData) {
 	console.log("decideOnNextMove");
 	if (gameData[Consts.SIDES.player].cards.length < 2) {
+		console.log("Deal the player a card since he has less than 2 cards");
 		return Consts.GAME_NEXT_MOVE.player_card;
 	} else if (gameData[Consts.SIDES.dealer].cards.length < 1) {
+		console.log("Deal the dealer a card since he has less than 1 card");
 		return Consts.GAME_NEXT_MOVE.dealer_card;
 	} else if (gameData.state === Consts.GAME_STATE.ongoing) {
+		console.log("Ask the player if he wants to hit or stay");
 		return Consts.GAME_NEXT_MOVE.ask_player;
 	} else if (gameData.state === Consts.GAME_STATE.finished) {
+		console.log("Game is over");
 		return Consts.GAME_NEXT_MOVE.game_over;
 	} else if (gameData.state === Consts.GAME_STATE.player_hold) {
+		console.log("Player has hold, it's the dealers turn");
 		return Consts.GAME_NEXT_MOVE.dealer_card;
 	} else {
 		// This should not happen.
@@ -62,9 +67,10 @@ var addCard = function(gameData, newCard, side, callback) {
 			gameData.result = (side === Consts.SIDES.dealer ? Consts.GAME_RESULT.dealer_bust : Consts.GAME_RESULT.player_bust);
 		}
 	}
-	if (side === Consts.SIDES.player && gameData[side].sum === 21) {
+	if ((side === Consts.SIDES.player) && (gameData[Consts.SIDES.player].sum === 21)) {
 		// Player has 21.
 		// Dealer still needs to take cards.
+		console.log("Player has 21, Dealer still needs to take cards");
 		gameData.state = Consts.GAME_STATE.player_hold;
 	} else if (side === Consts.SIDES.dealer) {
 		// This card was the dealers card but he's not busted yet.
@@ -127,7 +133,7 @@ game.handleNewCard = function(userId, newCard, side, callback) {
 
 game.handleUserHit = function(userId, callback) {
 	getGameData(userId, function(gameData) {
-		if (typeof gameData === "undefined" || gameData.state !== Consts.GAME_STATE.ongoing) {
+		if ((typeof gameData === "undefined") || (gameData.state !== Consts.GAME_STATE.ongoing)) {
 			// This should not happen...
 			console.log("handleUserHit - got this in an irrelevant state.")
 			callback(false);
@@ -138,6 +144,7 @@ game.handleUserHit = function(userId, callback) {
 }
 
 game.handleUserStay = function(userId, callback) {
+	console.log("handleUserStay");
 	getGameData(userId, function(gameData) {
 		if (typeof gameData === "undefined" || gameData.state !== Consts.GAME_STATE.ongoing) {
 			// This should not happen...
@@ -200,6 +207,7 @@ game.getCardFromDeck = function(userId, callback) {
 	getGameData(userId, function(gameData) {
 		var newCard = createRandomCard(gameData);
 		console.log("New card to be dealt: " + game.cardToString(newCard));
+		newCard.imageUrl = Consts.CARDS_IMAGE_BASE_URL + game.cardToString(newCard) + ".png";
 		callback(newCard);
 	});
 }

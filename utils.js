@@ -2,9 +2,6 @@
 
 var Consts = require('./consts');
 var Sentences = require('./sentences');
-var MongoHelper = require('./mongoHelper');
-var HttpHelper = require('./httpHelper');
-var userInfoCache = {};
 var utils = {};
 
 utils.isArray = function(arr) {
@@ -30,11 +27,6 @@ utils.shuffleArray = function(array) {
   return array;
 }
 
-utils.getCardImage = function(cardFromDeck, callback) {
-  var cardImageUrl = Consts.CARDS_IMAGE_BASE_URL + cardFromDeck + ".png";
-  callback(cardImageUrl);
-}
-
 utils.getSentence = function(sentenceKey) {
   if (typeof Sentences[sentenceKey] === "undefined") return "";
   if (typeof Sentences[sentenceKey] === "string") return Sentences[sentenceKey];
@@ -47,47 +39,6 @@ utils.isNormalIntegerFromMinToMax = function(str, min, max) {
   var bRegEx = (new RegExp(regExStr, "i")).test(str);
   console.log("Output of regex test: " + regExStr + " => " + bRegEx + " - for str: " + str);
   return bRegEx;
-}
-
-utils.getUserInfo = function(userId, callback) {
-  if (typeof userInfoCache[userId] !== "undefined" &&
-    typeof userInfoCache[userId].info !== "undefined" &&
-    typeof userInfoCache[userId].info.first_name === "string" &&
-    typeof userInfoCache[userId].info.last_name === "string" &&
-    typeof userInfoCache[userId].info.gender === "string") {
-    console.log("getUserInfo - Have the user info in the cache.");
-    callback(userInfoCache[userId].info);
-    return;
-  }
-  console.log("getUserInfo - Don't have the user info in the cache, getting it from Mongo.");
-  MongoHelper.getUserInfoFromMongo(userId, function(mongoUserInfo) {
-    if (typeof mongoUserInfo !== "undefined" &&
-      mongoUserInfo.first_name &&
-      mongoUserInfo.last_name &&
-      mongoUserInfo.gender) {
-      console.log("getUserInfo - Got the user info from Mongo.");
-      userInfoCache[userId] = {};
-      userInfoCache[userId].info = {};
-      userInfoCache[userId].info = mongoUserInfo;
-      callback(mongoUserInfo);
-    } else {
-      console.log("getUserInfo - Can't find the user info in the Mongo, calling the facebook API.");
-      HttpHelper.httpGetJson(Consts.FACEBOOK_USER_PROFILE_API.replace("<USER_ID>", userId), function(fbUserInfo) {
-        if (typeof fbUserInfo === "undefined") {
-          console.log("getUserInfo - Can't get the user info from the facebook API.");
-          callback(null);
-        } else {
-          console.log("getUserInfo - Got the user info from the facebook API.");
-          fbUserInfo.user_id = userId;
-          if (typeof userInfoCache[userId] === "undefined") {
-            userInfoCache[userId] = {};
-          }
-          userInfoCache[userId].info = fbUserInfo;
-          MongoHelper.insertUserInfoToMongo(fbUserInfo, callback);
-        }
-      });
-    }
-  });
 }
 
 module.exports = utils;

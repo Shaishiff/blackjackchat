@@ -34,39 +34,12 @@ controller.middleware.receive.use(function(bot, message, next) {
   console.log("controller.middleware.receive.use - " + JSON.stringify(message));
   AnalyticsHelper.sendUserMsgToAnalytics(message.user, message.text);
   next();
-  // Utils.getUserInfo(message.user, function(userInfo) {
-  //   if (typeof userInfo !== "undefined") {
-  //     message.userInfo = userInfo;
-  //     message.fullNameWithId = userInfo.first_name + "_" + userInfo.last_name + "_" + message.user;
-  //   } else {
-  //     message.fullNameWithId = message.user;
-  //   }
-  //   var bNext = true;
-  //   if (message.attachments) {
-  //     // SHAISH: For now we'll disable this. If we want to enable it we will need
-  //     // to make sure it doesn't conflict with the guide flow.
-  //     //bNext = handleUserAttachment(bot, message, "");
-  //   }
-  //   if (bNext) {
-  //     next();
-  //   } else {
-  //     bot.reply(message, "Sorry, I don't understand these kind of stuff :(");
-  //   }
-  // });
 });
 
 controller.middleware.send.use(function(bot, message, next) {
   console.log("controller.middleware.send.use - " + JSON.stringify(message));
   AnalyticsHelper.sendBotMsgToAnalytics(message.channel, message.text || "-empty-");
   next();
-  // Utils.getUserInfo(message.channel, function(userInfo) {
-  //   if (typeof userInfo !== "undefined") {
-  //     message.userInfo = userInfo;
-  //     message.fullNameWithId = userInfo.first_name + "_" + userInfo.last_name + "_" + message.channel;
-  //   } else {
-  //     message.fullNameWithId = message.channel;
-  //   }
-  // });
 });
 
 // Main menu.
@@ -83,12 +56,6 @@ controller.on("message_received", function(bot, message) {
     AnalyticsHelper.sendUserMsgToAnalytics("unknown_msgs", message.text);
   }
 });
-
-// function notSureWhatUserWants(bot, message) {
-//   if (PostBackHelper.isPostBack(message)) return;
-//   console.log("No idea what the user wants...");
-//   AnalyticsHelper.sendUserMsgToAnalytics("unknown_msgs", message.text);
-// }
 
 // Facebook postsbacks.
 controller.on('facebook_postback', function(bot, message) {

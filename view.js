@@ -4,7 +4,6 @@ var Consts = require('./consts');
 var Utils = require('./utils');
 var FacebookHelper = require('./facebookHelper');
 var Game = require('./game');
-var Deck = require('./deck');
 var User = require('./user');
 var view = {};
 
@@ -28,13 +27,13 @@ view.buildShouldIDealYouIn = function() {
 	return FacebookHelper.buildButtonTemplate(Utils.getSentence("should_i_deal_you_in"), view.buildShouldIDealYouInButtons());
 }
 
-view.showShouldIDealYouIn = function(bot, message) {
+view.showShouldIDealYouIn = function(bot, message, additionalText) {
 	console.log("showShouldIDealYouIn");
 	User.getUserBalance(message.user, function(balance) {
 		var yourBalanceText = Utils.getSentence("your_new_balance_is") + ": " + balance;
 		FacebookHelper.sendButtonTemplate(bot,
 			message,
-			yourBalanceText + "\n" + Utils.getSentence("should_i_deal_you_in"),
+			(typeof additionalText === "string" ? (additionalText + "\n"): "") + yourBalanceText + "\n" + Utils.getSentence("should_i_deal_you_in"),
 			view.buildShouldIDealYouInButtons());
 	});
 }
@@ -193,11 +192,11 @@ var showEndOfGame = function(bot, message, gameData) {
 			break;
 	}
 	User.updateUserBalance(message.user, balanceChange, function(newBalance) {
-		FacebookHelper.sendText(bot, message, text, function() {
+		//FacebookHelper.sendText(bot, message, text, function() {
 			FacebookHelper.sendImage(bot, message, Consts.DEALER_IMAGE_URL, function() {
-				view.showShouldIDealYouIn(bot, message);
+				view.showShouldIDealYouIn(bot, message, text);
 			});
-		});
+		//});
 	});
 }
 
@@ -229,12 +228,10 @@ view.showCard = function(bot, message, text, side) {
 	console.log("showCard");
 	FacebookHelper.sendText(bot, message, text, function() {
 		Game.getCardFromDeck(message.user, function(cardFromDeck){
-			Utils.getCardImage(cardFromDeck, function(imageUrl) {
-				//FacebookHelper.sendImage(bot, message, imageUrl, function() {
-				FacebookHelper.sendText(bot, message, Game.cardToString(cardFromDeck) + " (this should be an image)",  function() {
-					Game.handleNewCard(message.user, cardFromDeck, side, function(gameData, nextMove) {
-						showNextMove(bot, message, gameData, nextMove);
-					});
+			//FacebookHelper.sendImage(bot, message, cardFromDeck.imageUrl, function() {
+			FacebookHelper.sendText(bot, message, Game.cardToString(cardFromDeck) + " (this should be an image)",  function() {
+				Game.handleNewCard(message.user, cardFromDeck, side, function(gameData, nextMove) {
+					showNextMove(bot, message, gameData, nextMove);
 				});
 			});
 		});
@@ -251,7 +248,7 @@ view.showPlayersCard = function(bot, message) {
 
 view.showPlayerHit = function(bot, message) {
 	console.log("showPlayerHit");
-	Game.handleUserStay(message.user, function(res) {
+	Game.handleUserHit(message.user, function(res) {
 		if (res) {
 			view.showPlayersCard(bot, message);
 		}

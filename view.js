@@ -228,8 +228,8 @@ view.showCard = function(bot, message, text, side) {
 	console.log("showCard");
 	FacebookHelper.sendText(bot, message, text, function() {
 		Game.getCardFromDeck(message.user, function(cardFromDeck){
-			//FacebookHelper.sendImage(bot, message, cardFromDeck.imageUrl, function() {
-			FacebookHelper.sendText(bot, message, Game.cardToString(cardFromDeck) + " (this should be an image)",  function() {
+			FacebookHelper.sendImage(bot, message, cardFromDeck.imageUrl, function() {
+			//FacebookHelper.sendText(bot, message, Game.cardToString(cardFromDeck) + " (this should be an image)",  function() {
 				Game.handleNewCard(message.user, cardFromDeck, side, function(gameData, nextMove) {
 					showNextMove(bot, message, gameData, nextMove);
 				});

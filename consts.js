@@ -10,7 +10,7 @@ var consts = {
 	ANALYTICS_API: "http://api.bot-metrics.com/v1/messages",
 	USER_INITIAL_BALANCE: 1000,
 	DEFAULT_BET_PER_GAME: 50,
-	CARDS_IMAGE_BASE_URL: "https://raw.githubusercontent.com/Shaishiff/blackjackchat/master/images/",
+	CARDS_IMAGE_BASE_URL: "https://raw.githubusercontent.com/Shaishiff/blackjackchat/master/images/cards/",
 	DEALER_IMAGE_URL: "https://raw.githubusercontent.com/Shaishiff/blackjackchat/master/images/dealer.png",
 	NUMBER_OF_DECKS: 1,
 	BLACKJACK_PAY_OUT: 1.5,

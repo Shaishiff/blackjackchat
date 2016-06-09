@@ -17,8 +17,8 @@ var consts = {
 	DECK_SUITS: ["H","D","C","S"],
 	DECK_RANKS: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
 	SIDES: {
-		dealer: 1,
-		player: 2
+		dealer: "dealer",
+		player: "player"
 	},
 	GAME_STATE: {
 		ongoing: 1,
@@ -32,13 +32,13 @@ var consts = {
 		game_over: 4
 	},
 	GAME_RESULT: {
-		undecided: 1,
-		dealer_bust: 2,
-		player_bust: 3,
-		dealer_wins: 4,
-		player_wins: 5,
-		player_wins_with_blackjack: 6,
-		draw: 7
+		undecided: "undecided",
+		dealer_bust: "dealer_bust",
+		player_bust: "player_bust",
+		dealer_wins: "dealer_wins",
+		player_wins: "player_wins",
+		player_wins_with_blackjack: "player_wins_with_blackjack",
+		draw: "draw"
 	}
 };
 

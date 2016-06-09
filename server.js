@@ -34,8 +34,11 @@ controller.setupWebserver(webServerPort, function(err, webserver) {
 // Log the message and add more info to the message.
 controller.middleware.receive.use(function(bot, message, next) {
   //console.log("controller.middleware.receive.use - " + JSON.stringify(message));
-  AnalyticsHelper.sendUserMsgToAnalytics(message.user, message.text);
-  next();
+  User.createUserInfo(message.user, function(userCreated) {
+    message.userCreated = userCreated;
+    AnalyticsHelper.sendUserMsgToAnalytics(message.user, message.text);
+    next();
+  });
 });
 
 controller.middleware.send.use(function(bot, message, next) {
@@ -57,7 +60,7 @@ controller.hears(["clear games"], 'message_received', function(bot, message) {
 
 controller.hears(["add to balance"], 'message_received', function(bot, message) {
   User.updateUserBalance(message.user, 10000, function() {
-    bot.reply(message, "Add 10000 to user balance");
+    bot.reply(message, "Added 10000 to user balance");
   });
 });
 

@@ -166,42 +166,14 @@ var showUserBalance = function(bot, message, newBalance, callback) {
 
 var showEndOfGame = function(bot, message, gameData) {
 	console.log("showEndOfGame");
-	var balanceChange = 0;
-	var text = "";
-	switch (gameData.result) {
-		case Consts.GAME_RESULT.dealer_bust:
-			text = Utils.getSentence("end_of_game_dealer_bust");
-			balanceChange = gameData.bet;
-			break;
-		case Consts.GAME_RESULT.player_bust:
-			text = Utils.getSentence("end_of_game_player_bust");
-			balanceChange = (-1)*gameData.bet;
-			break;
-		case Consts.GAME_RESULT.dealer_wins:
-			text = Utils.getSentence("end_of_game_dealer_wins");
-			balanceChange = (-1)*gameData.bet;
-			break;
-		case Consts.GAME_RESULT.player_wins:
-			text = Utils.getSentence("end_of_game_player_wins");
-			balanceChange = gameData.bet;
-			break;
-		case Consts.GAME_RESULT.player_wins_with_blackjack:
-			text = Utils.getSentence("end_of_game_player_wins_with_blackjack");
-			balanceChange = Consts.BLACKJACK_PAY_OUT*gameData.bet;
-			break;
-		case Consts.GAME_RESULT.draw:
-			text = Utils.getSentence("end_of_game_draw");
-			break;
-		default:
-			// This should never happen...
-			break;
-	}
-	User.updateUserBalance(message.user, balanceChange, function(newBalance) {
-		//FacebookHelper.sendText(bot, message, text, function() {
-			FacebookHelper.sendImage(bot, message, Consts.DEALER_IMAGE_URL, function() {
-				view.showShouldIDealYouIn(bot, message, text);
-			});
-		//});
+	Game.getBalanceChange(gameData, function(balanceChange, text) {
+		User.updateUserBalance(message.user, balanceChange, function(newBalance) {
+			//FacebookHelper.sendText(bot, message, text, function() {
+				FacebookHelper.sendImage(bot, message, Consts.DEALER_IMAGE_URL, function() {
+					view.showShouldIDealYouIn(bot, message, text);
+				});
+			//});
+		});
 	});
 }
 

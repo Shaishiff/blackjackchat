@@ -13,8 +13,8 @@ mongoHelper.insert = function(docToInsert, collection, callback) {
 		}
 		db.collection(collection).insertOne(docToInsert, function(errInsert, r) {
 			db.close();
-			if(!errInsert) {
-				console.error("insertIntoMongo - Insert complete with error: " + errInsert);
+			if(errInsert) {
+				console.error("insertIntoMongo - error: " + errInsert);
 				callback(false);
 				return;
 			}
@@ -32,8 +32,8 @@ mongoHelper.upsert = function(docToFind, docToUpsert, collection, callback) {
 		}
 		db.collection(collection).update(docToFind, docToUpsert, {upsert: true}, function(errUpsert, r) {
 			db.close();
-			if(!errUpsert) {
-				console.error("upsertIntoMongo - Upsert complete with error: " + errUpsert);
+			if(errUpsert) {
+				console.error("upsertIntoMongo - error: " + errUpsert);
 				callback(false);
 				return;
 			}
@@ -73,7 +73,7 @@ mongoHelper.delete = function(docToFind, collection, callback) {
 		db.collection(collection).deleteMany(docToFind, function(err, results) {
 			db.close();
 			if (err) {
-				console.log("deleteFromMongo - Could not find the document: " + err);
+				console.log("deleteFromMongo - err: " + err);
 				callback(false);
 			} else {
 				callback(true);

@@ -3,7 +3,7 @@
 var Request = require('request');
 var httpHelper = {};
 
-httpHelper.httpGetJson = function(url, callback) {
+httpHelper.getJson = function(url, callback) {
   Request({
     url: url,
     method: 'GET'
@@ -23,7 +23,7 @@ httpHelper.httpGetJson = function(url, callback) {
       callback(parsedResponse);
       return;
     }
-    callback();
+    callback(null);
   });
 }
 
@@ -50,7 +50,7 @@ httpHelper.httpPostJson = function(url, headers, body, callback) {
       callback(parsedResponse);
       return;
     }
-    callback();
+    callback(null);
   });
 }
 

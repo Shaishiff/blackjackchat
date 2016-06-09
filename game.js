@@ -4,6 +4,7 @@ var Consts = require('./consts');
 var MongoHelper = require('./mongoHelper');
 var View = require('./view');
 var Utils = require('./utils');
+var User = require('./user');
 var Mixpanel = require('mixpanel');
 var mixpanelInstance = Mixpanel.init(process.env.MIXPANEL_TOKEN);
 var game = {};
@@ -67,6 +68,8 @@ var addCard = function(gameData, newCard, side, callback) {
 			console.log("This side is still over 21 even after converting aces");
 			gameData.state = Consts.GAME_STATE.finished;
 			gameData.result = (side === Consts.SIDES.dealer ? Consts.GAME_RESULT.dealer_bust : Consts.GAME_RESULT.player_bust);
+			mixpanelInstance.track('game_over', {$distinct_id: gameData.userId, gameId: gameData.gameId, result: gameData.result});
+			mixpanelInstance.people.increment(gameData.userId, gameData.result);
 		}
 	}
 	if ((side === Consts.SIDES.player) && (gameData[Consts.SIDES.player].sum === 21)) {
@@ -84,6 +87,8 @@ var addCard = function(gameData, newCard, side, callback) {
 			console.log("Player blackjack !");
 			gameData.state = Consts.GAME_STATE.finished;
 			gameData.result = Consts.GAME_RESULT.player_wins_with_blackjack;
+			mixpanelInstance.track('game_over', {$distinct_id: gameData.userId, gameId: gameData.gameId, result: gameData.result});
+			mixpanelInstance.people.increment(gameData.userId, gameData.result);
 		} else if (gameData.state === Consts.GAME_STATE.ongoing) {
 			// User is still taking cards. Nothing to do right now.
 		} else if (gameData.state === Consts.GAME_STATE.player_hold) {
@@ -97,12 +102,18 @@ var addCard = function(gameData, newCard, side, callback) {
 				if (gameData[Consts.SIDES.dealer].sum > gameData[Consts.SIDES.player].sum) {
 					// Dealer won.
 					gameData.result = Consts.GAME_RESULT.dealer_wins;
+					mixpanelInstance.track('game_over', {$distinct_id: gameData.userId, gameId: gameData.gameId, result: gameData.result});
+					mixpanelInstance.people.increment(gameData.userId, gameData.result);
 				} else if (gameData[Consts.SIDES.dealer].sum < gameData[Consts.SIDES.player].sum) {
 					// Player won.
 					gameData.result = Consts.GAME_RESULT.player_wins;
+					mixpanelInstance.track('game_over', {$distinct_id: gameData.userId, gameId: gameData.gameId, result: gameData.result});
+					mixpanelInstance.people.increment(gameData.userId, gameData.result);
 				} else {
 					// Draw.
 					gameData.result = Consts.GAME_RESULT.draw;
+					mixpanelInstance.track('game_over', {$distinct_id: gameData.userId, gameId: gameData.gameId, result: gameData.result});
+					mixpanelInstance.people.increment(gameData.userId, gameData.result);
 				}
 			}
 		}
@@ -115,6 +126,8 @@ var addCard = function(gameData, newCard, side, callback) {
 game.startNewGame = function(userId, bet, callback) {
 	var gameData = {};
 	gameData.gameId = Utils.createRandomString(16);
+	gameData.started = (new Date()).getTime();
+	gameData.startedStr = (new Date()).toString();
 	gameData.userId = userId;
 	gameData.bet = bet;
 	gameData.state = Consts.GAME_STATE.ongoing;
@@ -124,7 +137,10 @@ game.startNewGame = function(userId, bet, callback) {
 	gameData[Consts.SIDES.player] = {};
 	gameData[Consts.SIDES.player].cards = [];
 	setGameData(gameData, function() {
-		mixpanelInstance.track('new_game', {distinct_id: gameData.gameId});
+		User.getAndSetUsersFirstGame(userId, function(firstGameForUser) {
+			mixpanelInstance.track('game_started', {$distinct_id: gameData.userId, gameId: gameData.gameId, bet: gameData.bet, firstGameForUser: firstGameForUser});
+		});
+		mixpanelInstance.people.increment(gameData.userId, {"game_started": 1, "total_bets": gameData.bet});
 		callback();
 	});
 }
@@ -132,6 +148,7 @@ game.startNewGame = function(userId, bet, callback) {
 game.handleNewCard = function(userId, newCard, side, callback) {
 	getGameData(userId, function(gameData) {
 		addCard(gameData, newCard, side, callback);
+		mixpanelInstance.track('game_card', {$distinct_id: gameData.userId, gameId: gameData.gameId, suit: newCard.suit, rank: newCard.rank, side: side});
 	});
 }
 
@@ -142,6 +159,7 @@ game.handleUserHit = function(userId, callback) {
 			console.log("handleUserHit - got this in an irrelevant state.")
 			callback(false);
 		} else {
+			mixpanelInstance.track('game_event', {$distinct_id: gameData.userId, gameId: gameData.gameId, name: "user_hit"});
 			callback(true);
 		}
 	});
@@ -157,6 +175,7 @@ game.handleUserStay = function(userId, callback) {
 		} else {
 			gameData.state = Consts.GAME_STATE.player_hold;
 			setGameData(gameData, function() {
+				mixpanelInstance.track('game_event', {$distinct_id: gameData.userId, gameId: gameData.gameId, name: "user_stay"});
 				callback(true);
 			});
 		}
@@ -214,6 +233,45 @@ game.getCardFromDeck = function(userId, callback) {
 		newCard.imageUrl = Consts.CARDS_IMAGE_BASE_URL + game.cardToString(newCard) + ".png";
 		callback(newCard);
 	});
+}
+
+game.getBalanceChange = function(gameData, callback) {
+	var balanceChange = 0;
+	var text = "";
+	switch (gameData.result) {
+		case Consts.GAME_RESULT.dealer_bust:
+			text = Utils.getSentence("end_of_game_dealer_bust");
+			balanceChange = gameData.bet;
+			break;
+		case Consts.GAME_RESULT.player_bust:
+			text = Utils.getSentence("end_of_game_player_bust");
+			balanceChange = (-1)*gameData.bet;
+			break;
+		case Consts.GAME_RESULT.dealer_wins:
+			text = Utils.getSentence("end_of_game_dealer_wins");
+			balanceChange = (-1)*gameData.bet;
+			break;
+		case Consts.GAME_RESULT.player_wins:
+			text = Utils.getSentence("end_of_game_player_wins");
+			balanceChange = gameData.bet;
+			break;
+		case Consts.GAME_RESULT.player_wins_with_blackjack:
+			text = Utils.getSentence("end_of_game_player_wins_with_blackjack");
+			balanceChange = Consts.BLACKJACK_PAY_OUT*gameData.bet;
+			break;
+		case Consts.GAME_RESULT.draw:
+			text = Utils.getSentence("end_of_game_draw");
+			break;
+		default:
+			// This should never happen...
+			break;
+	}
+	if (balanceChange > 0) {
+		mixpanelInstance.people.increment(gameData.userId, {"total_won": balanceChange});
+	} else if (balanceChange < 0) {
+		mixpanelInstance.people.increment(gameData.userId, {"total_lost": (-1)*balanceChange});
+	}
+	callback(balanceChange, text);
 }
 
 game.clearGameData = function(userId, callback) {

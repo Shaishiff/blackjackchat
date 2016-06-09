@@ -52,7 +52,7 @@ mongoHelper.get = function(docToFind, collection, callback) {
 		db.collection(collection).find(docToFind).limit(1).toArray(function(errFind, docs) {
 			db.close();
 			if (docs instanceof Array && docs.length == 1) {
-				console.log("getFromMongo - Found the document: " + JSON.stringify(docs[0]));
+				//console.log("getFromMongo - Found the document: " + JSON.stringify(docs[0]));
 				callback(docs[0]);
 			} else {
 				console.log("getFromMongo - Could not find the document: " + errFind);
@@ -62,16 +62,24 @@ mongoHelper.get = function(docToFind, collection, callback) {
 	});
 }
 
-// mongoHelper.insertUserInfoToMongo = function(userInfo, callback) {
-// 	insertIntoMongo(userInfo, Consts.MONGO_DB_USER_INFO_COL, callback);
-// }
 
-// mongoHelper.getUserInfoFromMongo = function(userId, callback) {
-//  	getFromMongo({user_id : userId}, Consts.MONGO_DB_USER_INFO_COL, callback);
-// }
-
-// mongoHelper.upsertUserInfoToMongo = function(userId, userInfo, callback) {
-// 	upsertIntoMongo({user_id : userId}, userInfo, Consts.MONGO_DB_USER_INFO_COL, callback);
-// }
+mongoHelper.delete = function(docToFind, collection, callback) {
+	MongoClient.connect(Consts.MONGO_DB_URL, function(errConnect, db) {
+		if(errConnect) {
+			console.error("deleteFromMongo - Could not connect to server with error: " + errConnect);
+			callback(false);
+			return;
+		}
+		db.collection(collection).deleteMany(docToFind, function(err, results) {
+			db.close();
+			if (err) {
+				console.log("deleteFromMongo - Could not find the document: " + err);
+				callback(false);
+			} else {
+				callback(true);
+			}
+		});
+	});
+}
 
 module.exports = mongoHelper;

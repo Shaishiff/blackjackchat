@@ -94,7 +94,7 @@ view.showHowMuchToBet = function(bot, message) {
 
 view.showBet = function(bot, message, bet) {
 	Game.getGameState(message.user, function(state) {
-		console.log("showBet - game is in state" + state);
+		console.log("showBet - game is in state: " + state);
 		if(state === Consts.GAME_STATE.ongoing || state === Consts.GAME_STATE.player_hold) {
 			// Game is in progress, can't set the bet now.
 			console.log("Game is in progress, can't set the bet now.");
@@ -133,6 +133,11 @@ view.showDealYouInResponse = function(bot, message, response) {
 
 var showGameSums = function(bot, message, gameData, callback) {
 	console.log("showGameSums");
+	if (gameData[Consts.SIDES.player].cards.length < 2) {
+		callback();
+		return;
+	}
+
 	var text = "";
 	if (typeof gameData[Consts.SIDES.player].sum !== "undefined" && gameData[Consts.SIDES.player].sum !== 0) {
 		if (text.length > 0) {
@@ -181,7 +186,7 @@ var showEndOfGame = function(bot, message, gameData) {
 			balanceChange = gameData.bet;
 			break;
 		case Consts.GAME_RESULT.player_wins_with_blackjack:
-			text = Utils.getSentence("end_of_game_player_wins");
+			text = Utils.getSentence("end_of_game_player_wins_with_blackjack");
 			balanceChange = Consts.BLACKJACK_PAY_OUT*gameData.bet;
 			break;
 		case Consts.GAME_RESULT.draw:
@@ -228,6 +233,7 @@ view.showCard = function(bot, message, text, side) {
 	console.log("showCard");
 	FacebookHelper.sendText(bot, message, text, function() {
 		Game.getCardFromDeck(message.user, function(cardFromDeck){
+			//FacebookHelper.sendImageWithTitle(bot, message, cardFromDeck.imageUrl, text, function() {
 			FacebookHelper.sendImage(bot, message, cardFromDeck.imageUrl, function() {
 			//FacebookHelper.sendText(bot, message, Game.cardToString(cardFromDeck) + " (this should be an image)",  function() {
 				Game.handleNewCard(message.user, cardFromDeck, side, function(gameData, nextMove) {

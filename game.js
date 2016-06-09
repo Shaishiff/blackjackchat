@@ -4,6 +4,8 @@ var Consts = require('./consts');
 var MongoHelper = require('./mongoHelper');
 var View = require('./view');
 var Utils = require('./utils');
+var Mixpanel = require('mixpanel');
+var mixpanelInstance = Mixpanel.init(process.env.MIXPANEL_TOKEN);
 var game = {};
 
 var getGameData = function(userId, callback) {
@@ -112,6 +114,7 @@ var addCard = function(gameData, newCard, side, callback) {
 
 game.startNewGame = function(userId, bet, callback) {
 	var gameData = {};
+	gameData.gameId = Utils.createRandomString(16);
 	gameData.userId = userId;
 	gameData.bet = bet;
 	gameData.state = Consts.GAME_STATE.ongoing;
@@ -121,6 +124,7 @@ game.startNewGame = function(userId, bet, callback) {
 	gameData[Consts.SIDES.player] = {};
 	gameData[Consts.SIDES.player].cards = [];
 	setGameData(gameData, function() {
+		mixpanelInstance.track('new_game', {distinct_id: gameData.gameId});
 		callback();
 	});
 }
@@ -210,6 +214,10 @@ game.getCardFromDeck = function(userId, callback) {
 		newCard.imageUrl = Consts.CARDS_IMAGE_BASE_URL + game.cardToString(newCard) + ".png";
 		callback(newCard);
 	});
+}
+
+game.clearGameData = function(userId, callback) {
+	MongoHelper.delete({userId : userId}, Consts.MONGO_DB_GAME_INFO_COL, callback);
 }
 
 module.exports = game;

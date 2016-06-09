@@ -3,6 +3,8 @@
 var Botkit = require('botkit');
 var View = require('./view');
 var Utils = require('./utils');
+var Game = require('./game');
+var User = require('./user');
 var FacebookHelper = require('./facebookHelper');
 var PostBackHelper = require('./postBackHelper');
 var AnalyticsHelper = require('./analyticsHelper');
@@ -31,21 +33,32 @@ controller.setupWebserver(webServerPort, function(err, webserver) {
 
 // Log the message and add more info to the message.
 controller.middleware.receive.use(function(bot, message, next) {
-  console.log("controller.middleware.receive.use - " + JSON.stringify(message));
+  //console.log("controller.middleware.receive.use - " + JSON.stringify(message));
   AnalyticsHelper.sendUserMsgToAnalytics(message.user, message.text);
   next();
 });
 
 controller.middleware.send.use(function(bot, message, next) {
-  console.log("controller.middleware.send.use - " + JSON.stringify(message));
+  //console.log("controller.middleware.send.use - " + JSON.stringify(message));
   AnalyticsHelper.sendBotMsgToAnalytics(message.channel, message.text || "-empty-");
   next();
 });
 
-// Main menu.
 controller.hears(["start","deal"], 'message_received', function(bot, message) {
   if (PostBackHelper.isPostBack(message)) return;
   View.showShouldIDealYouIn(bot, message);
+});
+
+controller.hears(["clear games"], 'message_received', function(bot, message) {
+  Game.clearGameData(message.user, function(res) {
+    bot.reply(message, "Cleared games for user with result: " + res);
+  });
+});
+
+controller.hears(["add to balance"], 'message_received', function(bot, message) {
+  User.updateUserBalance(message.user, 10000, function() {
+    bot.reply(message, "Add 10000 to user balance");
+  });
 });
 
 // Not sure what the users wants. Final fallback.

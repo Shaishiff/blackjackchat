@@ -12,6 +12,7 @@ var sentences = {
     end_of_game_player_bust: "Busted...",
     end_of_game_dealer_wins: "Dealer wins.",
     end_of_game_player_wins: "You win !",
+    end_of_game_player_wins_with_blackjack: "Blackjack ! You win !",
     end_of_game_draw: "Push.",
     your_new_balance_is: "Your balance is"
 }

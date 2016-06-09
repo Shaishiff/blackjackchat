@@ -1,4 +1,4 @@
-name: HappyHoursTLV
+name: BlackjackBot
 config:
   - name: FACEBOOK_PAGE_ID
     friendly_name: FACEBOOK_PAGE_ID
@@ -26,5 +26,9 @@ config:
     global: true
   - name: ANALYTICS_TOKEN
     friendly_name: ANALYTICS_TOKEN
+    type: secret
+    global: true
+  - name: MIXPANEL_TOKEN
+    friendly_name: MIXPANEL_TOKEN
     type: secret
     global: true

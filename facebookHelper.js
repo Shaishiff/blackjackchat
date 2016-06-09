@@ -115,6 +115,9 @@ var validateGenericTemplate = function(elements) {
 }
 
 facebookHelper.buildGenericTemplate = function(elements) {
+  if (!Utils.isArray(elements)) {
+    elements = [elements];
+  }
   return {
     attachment: {
       type: 'template',
@@ -175,6 +178,18 @@ facebookHelper.buildImage = function(imageUrl) {
 
 facebookHelper.sendImage = function(bot, message, imageUrl, callback) {
   bot.reply(message, facebookHelper.buildImage(imageUrl), callback);
+}
+
+facebookHelper.buildImageWithTitle = function(imageUrl, title) {
+  var element = {
+    title: title,
+    image_url: imageUrl
+  };
+  return facebookHelper.buildGenericTemplate(element);
+}
+
+facebookHelper.sendImageWithTitle = function(bot, message, imageUrl, title, callback) {
+  bot.reply(message, facebookHelper.buildImageWithTitle(imageUrl, title), callback);
 }
 
 facebookHelper.sendText = function(bot, message, text, callback) {

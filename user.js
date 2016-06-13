@@ -84,9 +84,9 @@ user.createUserInfo = function(userId, callback) {
 							draw: 0
 						});
 						mixpanelInstance.track('new_user', {
-							$distinct_id: userInfo.userId,
-							$created: userInfo.createdStr,
-							$timezone: userInfo.timezone,
+							distinct_id: userInfo.userId,
+							created: userInfo.createdStr,
+							timezone: userInfo.timezone,
 							locale: userInfo.locale,
 							gender: userInfo.gender
 						});

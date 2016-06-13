@@ -45,7 +45,7 @@ var addBalanceToUsers = function() {
 
 systemManagement.init = function(botInstance) {
 	bot = botInstance;
-	setInterval(addBalanceToUsers, 10000);
+	setInterval(addBalanceToUsers, 1000*60);
 }
 
 module.exports = systemManagement;

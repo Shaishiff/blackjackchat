@@ -5,6 +5,8 @@ var Utils = require('./utils');
 var FacebookHelper = require('./facebookHelper');
 var Game = require('./game');
 var User = require('./user');
+var Mixpanel = require('mixpanel');
+var mixpanelInstance = Mixpanel.init(process.env.MIXPANEL_TOKEN);
 var view = {};
 
 view.buildShouldIDealYouInButtons = function() {
@@ -93,18 +95,20 @@ view.showHowMuchToBet = function(bot, message) {
 }
 
 view.showBet = function(bot, message, bet) {
-	Game.getGameState(message.user, function(state) {
+	var userId = message.user;
+	Game.getGameState(userId, function(state) {
 		console.log("showBet - game is in state: " + state);
 		if(state === Consts.GAME_STATE.ongoing || state === Consts.GAME_STATE.player_hold) {
 			// Game is in progress, can't set the bet now.
 			console.log("Game is in progress, can't set the bet now.");
 		} else {
 			var actualBet = parseInt(bet);
-			User.getUserBalance(message.user, function(userBalance) {
+			User.getUserBalance(userId, function(userBalance) {
 				if (userBalance < actualBet) {
 					FacebookHelper.sendText(bot, message, Utils.getSentence("sorry_not_enough_balance") + " " + userBalance);
+					mixpanelInstance.track('cant_bet_not_enough_balance', {distinct_id: userId, userBalance: userBalance, wantedBet: actualBet});
 				} else {
-					Game.startNewGame(message.user, actualBet, function() {
+					Game.startNewGame(userId, actualBet, function() {
 						view.showDealersCard(bot, message);
 					});
 				}

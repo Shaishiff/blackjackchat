@@ -8,6 +8,9 @@ var User = require('./user');
 var FacebookHelper = require('./facebookHelper');
 var PostBackHelper = require('./postBackHelper');
 var AnalyticsHelper = require('./analyticsHelper');
+var SystemManagement = require('./systemManagement');
+// var Webshot = require('webshot');
+// var Fs = require('fs');
 
 var controller = Botkit.facebookbot({
   access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
@@ -28,8 +31,18 @@ controller.setupWebserver(webServerPort, function(err, webserver) {
     webserver.get('/health', function(req, res) {
       res.send('OK');
     });
+    webserver.get('/htmltopng', function(req, res) {
+      // var renderStream = Webshot('google.com');
+      // var file = Fs.createWriteStream('google2.png', {encoding: 'binary'});
+      // renderStream.on('data', function(data) {
+      //   file.write(data.toString('binary'), 'binary');
+      // });
+      res.send('A OK');
+    });
   });
 });
+
+SystemManagement.init(bot);
 
 // Log the message and add more info to the message.
 controller.middleware.receive.use(function(bot, message, next) {
@@ -58,7 +71,7 @@ controller.hears(["clear games"], 'message_received', function(bot, message) {
   });
 });
 
-controller.hears(["add to balance"], 'message_received', function(bot, message) {
+controller.hears(["add to balance","add balance"], 'message_received', function(bot, message) {
   User.updateUserBalance(message.user, 10000, function() {
     bot.reply(message, "Added 10000 to user balance");
   });
@@ -71,6 +84,11 @@ controller.on("message_received", function(bot, message) {
   if (message.text) {
     AnalyticsHelper.sendUserMsgToAnalytics("unknown_msgs", message.text);
   }
+});
+
+// Not sure what the users wants. Final fallback.
+controller.on("message_delivered", function(bot, message) {
+  console.log("message_delivered");
 });
 
 // Facebook postsbacks.

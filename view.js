@@ -100,8 +100,14 @@ view.showBet = function(bot, message, bet) {
 			console.log("Game is in progress, can't set the bet now.");
 		} else {
 			var actualBet = parseInt(bet);
-			Game.startNewGame(message.user, actualBet, function() {
-				view.showDealersCard(bot, message);
+			User.getUserBalance(message.user, function(userBalance) {
+				if (userBalance < actualBet) {
+					FacebookHelper.sendText(bot, message, Utils.getSentence("sorry_not_enough_balance") + " " + userBalance);
+				} else {
+					Game.startNewGame(message.user, actualBet, function() {
+						view.showDealersCard(bot, message);
+					});
+				}
 			});
 		}
 	});
@@ -240,6 +246,10 @@ view.showPlayerStay = function(bot, message) {
 			view.showDealersCard(bot, message);
 		}
 	});
+}
+
+view.showUserBalanceHasBeenResetToMin = function(bot, message, newBalance) {
+	FacebookHelper.sendText(bot, message, Utils.getSentence("your_balance_has_been_reset_to") + " " + newBalance);
 }
 
 module.exports = view;

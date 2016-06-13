@@ -113,8 +113,12 @@ user.getUserBalance = function(userId, callback) {
 user.updateUserBalance = function(userId, balanceChange, callback) {
 	user.getUserBalance(userId, function(balance) {
 		balance += balanceChange;
-		MongoHelper.upsert({userId : userId}, {userId: userId, balance: balance}, Consts.MONGO_DB_USER_BALANCE_COL, callback);
+		MongoHelper.upsert({userId : userId}, {userId: userId, balance: balance, lastChange: (new Date()).getTime()}, Consts.MONGO_DB_USER_BALANCE_COL, callback);
 	});
+}
+
+user.setUserBalance = function(userId, newBalance, callback) {
+	MongoHelper.upsert({userId : userId}, {userId: userId, balance: newBalance, lastChange: (new Date()).getTime()}, Consts.MONGO_DB_USER_BALANCE_COL, callback);
 }
 
 module.exports = user;

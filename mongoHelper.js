@@ -62,6 +62,24 @@ mongoHelper.get = function(docToFind, collection, callback) {
 	});
 }
 
+mongoHelper.getMultiple = function(docToFind, collection, callback) {
+	MongoClient.connect(Consts.MONGO_DB_URL, function(errConnect, db) {
+		if(errConnect) {
+			console.error("getMultiple - Could not connect to server with error: " + errConnect);
+			callback(null);
+			return;
+		}
+		db.collection(collection).find(docToFind).limit(1).toArray(function(errFind, docs) {
+			db.close();
+			if (docs instanceof Array && docs.length >= 1) {
+				callback(docs);
+			} else {
+				console.log("getMultiple - Could not find the document: " + errFind);
+				callback(null);
+			}
+		});
+	});
+}
 
 mongoHelper.delete = function(docToFind, collection, callback) {
 	MongoClient.connect(Consts.MONGO_DB_URL, function(errConnect, db) {

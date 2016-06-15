@@ -4,6 +4,7 @@ var Consts = require('./consts');
 var MongoHelper = require('./mongoHelper');
 var View = require('./view');
 var User = require('./user');
+var Game = require('./game');
 var systemManagement = {};
 var bot = null;
 
@@ -43,9 +44,26 @@ var addBalanceToUsers = function() {
 	});
 }
 
+ var clearOldGames = function() {
+ 	console.log("clearOldGames");
+	Game.getOldGamesData(Consts.TIME_FOR_GAME_TO_BE_CLOSED, function(docs) {
+ 		if(docs) {
+ 			for(var i=0; i < docs.length; i++) {
+ 				(function(){
+ 					var curDoc = docs[i];
+ 					console.log(JSON.stringify(curDoc));
+ 					var message = {channel: curDoc.userId};
+ 					Game.handleForfeitByTimeout(bot, message, curDoc, View.showNextMove);
+ 				}());
+ 			}
+ 		}
+	});
+}
+
 systemManagement.init = function(botInstance) {
 	bot = botInstance;
 	setInterval(addBalanceToUsers, 1000*60);
+	setInterval(clearOldGames, 1000*10);
 }
 
 module.exports = systemManagement;

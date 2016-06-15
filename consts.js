@@ -13,6 +13,7 @@ var consts = {
 	USER_MIN_BALANCE: 100,
 	INTERVAL_TO_REST_TO_MIN_BALANCE: (1000*60*10),
 	DEFAULT_BET_PER_GAME: 50,
+	TIME_FOR_GAME_TO_BE_CLOSED: (1000*60*2),
 	CARDS_IMAGE_BASE_URL: "https://raw.githubusercontent.com/Shaishiff/blackjackchat/master/images/cards/",
 	DEALER_IMAGE_URL: "https://raw.githubusercontent.com/Shaishiff/blackjackchat/master/images/dealer.png",
 	NUMBER_OF_DECKS: 1,
@@ -41,7 +42,8 @@ var consts = {
 		dealer_wins: "dealer_wins",
 		player_wins: "player_wins",
 		player_wins_with_blackjack: "player_wins_with_blackjack",
-		draw: "draw"
+		draw: "draw",
+		players_lost_by_timeout: "players_lost_by_timeout"
 	}
 };
 

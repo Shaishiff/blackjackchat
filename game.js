@@ -2,18 +2,23 @@
 
 var Consts = require('./consts');
 var MongoHelper = require('./mongoHelper');
-var View = require('./view');
 var Utils = require('./utils');
 var User = require('./user');
 var Mixpanel = require('mixpanel');
 var mixpanelInstance = Mixpanel.init(process.env.MIXPANEL_TOKEN);
 var game = {};
 
+game.getOldGamesData = function(timeSinceLastUpdate, callback) {
+	var lastUpdateTime = ((new Date()).getTime() - timeSinceLastUpdate);
+	MongoHelper.getMultiple({ lastUpdateTime: { $lt: lastUpdateTime }, state: { $ne: Consts.GAME_STATE.finished } }, Consts.MONGO_DB_GAME_INFO_COL, callback);
+}
+
 var getGameData = function(userId, callback) {
 	MongoHelper.get({userId : userId}, Consts.MONGO_DB_GAME_INFO_COL, callback);
 }
 
 var setGameData = function(gameData, callback) {
+	gameData.lastUpdateTime = (new Date()).getTime();
 	MongoHelper.upsert({userId : gameData.userId}, gameData, Consts.MONGO_DB_GAME_INFO_COL, callback);
 }
 
@@ -165,6 +170,17 @@ game.handleUserHit = function(userId, callback) {
 	});
 }
 
+
+game.handleForfeitByTimeout = function(bot, message, gameData, callback) {
+	gameData.state = Consts.GAME_STATE.finished;
+	gameData.result = Consts.GAME_RESULT.players_lost_by_timeout;
+	mixpanelInstance.track('game_over', {distinct_id: gameData.userId, gameId: gameData.gameId, result: gameData.result});
+	mixpanelInstance.people.increment(gameData.userId, gameData.result);
+	setGameData(gameData, function() {
+		callback(bot, message, gameData, Consts.GAME_NEXT_MOVE.game_over);
+	});
+}
+
 game.handleUserStay = function(userId, callback) {
 	console.log("handleUserStay");
 	getGameData(userId, function(gameData) {
@@ -261,6 +277,10 @@ game.getBalanceChange = function(gameData, callback) {
 			break;
 		case Consts.GAME_RESULT.draw:
 			text = Utils.getSentence("end_of_game_draw");
+			break;
+		case Consts.GAME_RESULT.players_lost_by_timeout:
+			text = Utils.getSentence("end_of_game_forfeit_by_timeout");
+			balanceChange = (-1)*gameData.bet;
 			break;
 		default:
 			// This should never happen...

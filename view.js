@@ -101,6 +101,7 @@ view.showBet = function(bot, message, bet) {
 		if(state === Consts.GAME_STATE.ongoing || state === Consts.GAME_STATE.player_hold) {
 			// Game is in progress, can't set the bet now.
 			console.log("Game is in progress, can't set the bet now.");
+			FacebookHelper.sendText(bot, message, Utils.getSentence("sorry_game_is_ongoing"));
 		} else {
 			var actualBet = parseInt(bet);
 			User.getUserBalance(userId, function(userBalance) {
@@ -122,6 +123,7 @@ view.showDealYouInResponse = function(bot, message, response) {
 	Game.getGameState(message.user, function(state) {
 		if(state === Consts.GAME_STATE.ongoing || state === Consts.GAME_STATE.player_hold) {
 			console.log("Game is in progress, can't start new game.");
+			FacebookHelper.sendText(bot, message, Utils.getSentence("sorry_game_is_ongoing"));
 		} else {
 			if (response === "yes") {
 				// We should deal the user in.
@@ -187,7 +189,7 @@ var showEndOfGame = function(bot, message, gameData) {
 	});
 }
 
-var showNextMove = function(bot, message, gameData, nextMove) {
+view.showNextMove = function(bot, message, gameData, nextMove) {
 	console.log("showNextMove");
 	console.log("NextMove: " + nextMove);
 	showGameSums(bot, message, gameData, function() {
@@ -219,7 +221,7 @@ view.showCard = function(bot, message, text, side) {
 			FacebookHelper.sendImage(bot, message, cardFromDeck.imageUrl, function() {
 			//FacebookHelper.sendText(bot, message, Game.cardToString(cardFromDeck) + " (this should be an image)",  function() {
 				Game.handleNewCard(message.user, cardFromDeck, side, function(gameData, nextMove) {
-					showNextMove(bot, message, gameData, nextMove);
+					view.showNextMove(bot, message, gameData, nextMove);
 				});
 			});
 		});

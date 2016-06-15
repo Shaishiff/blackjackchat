@@ -1,3 +1,5 @@
 node_modules
+images/cards-original
+dealer-original.png
 *.log
 npm_start.sh

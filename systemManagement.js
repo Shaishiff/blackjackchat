@@ -52,7 +52,7 @@ var addBalanceToUsers = function() {
  				(function(){
  					var curDoc = docs[i];
  					console.log(JSON.stringify(curDoc));
- 					var message = {channel: curDoc.userId};
+ 					var message = {channel: curDoc.userId, user: curDoc.userId};
  					Game.handleForfeitByTimeout(bot, message, curDoc, View.showNextMove);
  				}());
  			}

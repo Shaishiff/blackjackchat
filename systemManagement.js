@@ -8,6 +8,8 @@ var Game = require('./game');
 var systemManagement = {};
 var bot = null;
 
+// No real change...
+
 var addBalanceToUsers = function() {
 	console.log("addBalanceToUsers");
 	MongoHelper.get({}, Consts.MONGO_DB_SYSTEM_MANAGEMENT_COL, function(systemData) {

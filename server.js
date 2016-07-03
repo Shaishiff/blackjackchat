@@ -65,6 +65,11 @@ controller.hears(["start","deal"], 'message_received', function(bot, message) {
   View.showShouldIDealYouIn(bot, message);
 });
 
+controller.hears(["gif"], 'message_received', function(bot, message) {
+  if (PostBackHelper.isPostBack(message)) return;
+  View.sendGif(bot, message);
+});
+
 controller.hears(["clear games"], 'message_received', function(bot, message) {
   Game.clearGameData(message.user, function(res) {
     bot.reply(message, "Cleared games for user with result: " + res);

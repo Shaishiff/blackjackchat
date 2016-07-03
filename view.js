@@ -258,4 +258,10 @@ view.showUserBalanceHasBeenResetToMin = function(bot, message, newBalance) {
 	FacebookHelper.sendText(bot, message, Utils.getSentence("your_balance_has_been_reset_to") + " " + newBalance);
 }
 
+view.sendGif = function(bot, message) {
+	FacebookHelper.sendImage(bot, message, "https://media.giphy.com/media/xT0GqsYbMBuAIYBZ3W/giphy.gif", function() {
+		// Nothing here.
+	});
+}
+
 module.exports = view;

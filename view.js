@@ -260,7 +260,6 @@ view.showUserBalanceHasBeenResetToMin = function(bot, message, newBalance) {
 
 view.sendGif = function(bot, message) {
 	FacebookHelper.sendImage(bot, message, "https://media.giphy.com/media/xT0GqsYbMBuAIYBZ3W/giphy.gif", function() {
-		// Nothing here.
 	});
 }
 

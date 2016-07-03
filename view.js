@@ -259,7 +259,7 @@ view.showUserBalanceHasBeenResetToMin = function(bot, message, newBalance) {
 }
 
 view.sendGif = function(bot, message) {
-	FacebookHelper.sendImage(bot, message, "https://media.giphy.com/media/xT0GqsYbMBuAIYBZ3W/giphy.gif", function() {
+	FacebookHelper.sendImage(bot, message, "https://raw.githubusercontent.com/Shaishiff/blackjackchat/master/images/gif-test.gif", function() {
 	});
 }
 

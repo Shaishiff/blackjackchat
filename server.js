@@ -102,7 +102,7 @@ controller.hears(["tryurl"], 'message_received', function(bot, message) {
   buttons.push({
     type: "web_url",
     title: "Hit",
-    url: "http://localhost/fb/close-test.html"
+    url: "https://staging.crossrider.com/shai/close-test.html"
   });
   FacebookHelper.sendButtonTemplate(bot,
     message,

@@ -196,4 +196,26 @@ facebookHelper.sendText = function(bot, message, text, callback) {
   bot.reply(message, text, callback);
 }
 
+facebookHelper.buildTextWithQuickReplies = function(text, replies) {
+  if (!Utils.isArray(replies)) {
+    replies = [replies];
+  }
+  var formattedReplies = [];
+  for (var i = 0; i < replies.length; i++) {
+    formattedReplies.push({
+      "content_type": "text",
+      "title": replies[i].text,
+      "payload": replies[i].payload
+    });
+  }
+  return {
+    "text": text,
+    "quick_replies": formattedReplies
+  };
+}
+
+facebookHelper.sendTextWithQuickReplies = function(bot, message, text, replies, callback) {
+  bot.reply(message, facebookHelper.buildTextWithQuickReplies(text, replies), callback);
+}
+
 module.exports = facebookHelper;

@@ -21,7 +21,7 @@ var bot = controller.spawn({});
 
 // Set up the welcome message.
 if (process.env.FACEBOOK_PAGE_ACCESS_TOKEN) {
-  FacebookHelper.setWelcomeMessageButtonsMessage(Utils.getSentence("should_i_deal_you_in"), View.buildShouldIDealYouInButtons());
+  //FacebookHelper.setWelcomeMessageButtonsMessage(Utils.getSentence("should_i_deal_you_in"), View.buildShouldIDealYouInButtons());
 }
 
 // Start web server.
@@ -68,6 +68,47 @@ controller.hears(["start","deal"], 'message_received', function(bot, message) {
 controller.hears(["gif"], 'message_received', function(bot, message) {
   if (PostBackHelper.isPostBack(message)) return;
   View.sendGif(bot, message);
+});
+
+controller.hears(["test"], 'message_received', function(bot, message) {
+  if (PostBackHelper.isPostBack(message)) return;
+  FacebookHelper.sendTextWithQuickReplies(bot, message, "Testing this thing", [{
+    text: "text1",
+    payload: "payload1"
+  },{
+    text: "text2",
+    payload: "payload2"
+  },{
+    text: "text3",
+    payload: "payload3"
+  },{
+    text: "and yet another text",
+    payload: "payload4"
+  },{
+    text: "and yet another text",
+    payload: "payload4"
+  },{
+    text: "hello world !",
+    payload: "payload4"
+  },{
+    text: "and yet another text",
+    payload: "payload4"
+  }]);
+});
+
+controller.hears(["tryurl"], 'message_received', function(bot, message) {
+  if (PostBackHelper.isPostBack(message)) return;
+  var buttons = [];
+  buttons.push({
+    type: "web_url",
+    title: "Hit",
+    url: "http://localhost/fb/index.html"
+  });
+  FacebookHelper.sendButtonTemplate(bot,
+    message,
+    "Try Url",
+    buttons,
+    callback);
 });
 
 controller.hears(["clear games"], 'message_received', function(bot, message) {

@@ -107,8 +107,7 @@ controller.hears(["tryurl"], 'message_received', function(bot, message) {
   FacebookHelper.sendButtonTemplate(bot,
     message,
     "Try Url",
-    buttons,
-    callback);
+    buttons);
 });
 
 controller.hears(["clear games"], 'message_received', function(bot, message) {
